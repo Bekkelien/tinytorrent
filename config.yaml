@@ -1,0 +1,13 @@
+debug: true
+
+udp:
+  timeout: 3
+  connection_buffer: 16
+  announce_buffer: 1220  # Compute correct announce_buffer
+  scraping_buffer: 20
+
+tcp:
+  timeout: 3
+
+client:
+  peer_id: '-BB2080-39392343241'
