@@ -1,5 +1,5 @@
 
-# Internal libs 
+# Internals
 from read_file import TorrentFile
 from tracker_udp import UdpTracker, Event
 from tcp import PeerWire
@@ -9,9 +9,9 @@ if __name__ == '__main__':
     # Note this will only be for one torrent
 
     # For testing TODO: Make testing loop 
-    file = TorrentFile('./src/files/tails.torrent')
+    #file = TorrentFile('./src/files/tails.torrent')
     #file = TorrentFile('./src/files/multi_file.torrent')
-    #file = TorrentFile('./src/files/ChiaSetup-1.6.1.exe.torrent')
+    file = TorrentFile('./src/files/ChiaSetup-1.6.1.exe.torrent')
 
     #iprint("Announce: ",torrent['announce'])
     # Handle Announce list 

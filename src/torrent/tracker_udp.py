@@ -4,7 +4,6 @@ from enum import Enum
 from pathlib import Path
 from struct import pack, unpack
 from urllib.parse import urlparse
-#from dataclasses import dataclass
 from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 
 # Internal 
@@ -37,12 +36,13 @@ class UdpTracker:
         self.hostname = torrent['announce'] # Dose not support announce-list
         self.tracker_ip = gethostbyname(urlparse(self.hostname).hostname) 
         self.tracker_port = urlparse(self.hostname).port
+        print(self.tracker_ip, self.tracker_port)
 
         # Network settings UDP
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(config['udp']['timeout'])
     
-    @timer
+    #@timer
     def connect(self):
 
         # Send connection message
@@ -63,7 +63,7 @@ class UdpTracker:
         else:
             wprint("Connection to UDP tracker failed:", self.hostname)      
 
-    @timer
+    #@timer
     def announce(self, event) -> list:
         key = random.getrandbits(32)
         transaction_id = random.getrandbits(32)
@@ -109,7 +109,7 @@ class UdpTracker:
         else:
             wprint("Announce response failure")
 
-    @timer
+    #@timer
     def scraping(self):
         transaction_id = random.getrandbits(32)
         message = pack('>QII20s', self.connection_id, Action.scrape.value, transaction_id, self.info_hash)
@@ -136,14 +136,17 @@ if __name__ == '__main__':
     """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
 
     PATH = Path('./src/files/')
-    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent']
+    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent','ubuntu.torrent','big-buck-bunny.torrent']
 
     for file in files:
         file = TorrentFile(PATH / file)
 
         torrent, info_hash = file.read_torrent_file()
-        udp_connection = UdpTracker(torrent, info_hash)
-        udp_connection.connect() 
-        client_addresses = udp_connection.announce(Event.none.value) 
-        udp_connection.scraping()
-        dprint("Client Addresses:", client_addresses[0:5])
+
+        # TODO: Fix this for list as well 
+        if 'udp' in torrent['announce']:
+            udp_connection = UdpTracker(torrent, info_hash)
+            udp_connection.connect() 
+            client_addresses = udp_connection.announce(Event.none.value) 
+            udp_connection.scraping()
+            dprint("Client Addresses:", client_addresses[0:5])
