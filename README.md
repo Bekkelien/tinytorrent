@@ -10,3 +10,13 @@
 - [ ] Implement tracker protocol logic as of now only supports UDP tracking
 - [ ] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
 - [ ] Handle pice length for a torrent file 
+- [ ] Find out if udp tracker protocol need to support IPv6 or that all that stuff is IPv4
+
+### Reserve response from current hand sake testing (Client's extension protocol's ?)
+```python
+    ↑♣ b'\x00\x00\x00\x00\x00\x18\x00\x05'
+    ►♣ b'\x00\x00\x00\x00\x00\x10\x00\x05'
+    ►☺ b'\x00\x00\x00\x00\x00\x10\x00\x01'
+    ►♦ b'\x00\x00\x00\x00\x00\x10\x00\x04'
+    ►  b'\x00\x00\x00\x00\x00\x10\x00\x00'
+```

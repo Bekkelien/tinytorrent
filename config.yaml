@@ -3,11 +3,15 @@ debug: true
 udp:
   timeout: 3
   connection_buffer: 16
-  announce_buffer: 1220  # Compute correct announce_buffer
-  scraping_buffer: 20
+  announce_buffer: 4096 # Unknown max size
+  scraping_buffer: 32 # In reality [20] but 32 to match hardware and network reality
+
+
+#4096
 
 tcp:
-  timeout: 3
+  timeout: 1
+  handshake_buffer: 4096 # Unknown max size
 
 client:
   peer_id: '-BB2080-39392343241'

@@ -64,7 +64,7 @@ class UdpTracker:
             wprint("Connection to UDP tracker failed:", self.hostname)      
 
     #@timer
-    def announce(self, event) -> list:
+    def announce(self, event):
         key = random.getrandbits(32)
         transaction_id = random.getrandbits(32)
         message = pack('>QII20s20sQQQIIIih',self.connection_id,
