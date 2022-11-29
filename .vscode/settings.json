@@ -4,6 +4,4 @@
         "iprint",
         "wprint"
     ],
-    "python.linting.mypyEnabled": true,
-    "python.linting.enabled": true
 }

@@ -1,5 +1,6 @@
 import time
 #import logging
+from termcolor import colored
 from datetime import datetime
 
 # Internal 
@@ -21,27 +22,27 @@ def timer(func):
 
 #logger = logging.getLogger(__name__)
 
-def iprint(*args):
+def iprint(*args, color = 'white'):
     info_msg = ' '.join([str(i) for i in args])
     info_msg = str(datetime.now()) + " [INFO] " + info_msg
     #logging.info(str(info_msg))
-    print(info_msg)
+    print(colored(info_msg, color))
 
-def dprint(*args):
+def dprint(*args, color = 'yellow'):
     debug_msg = ' '.join([str(i) for i in args])
     debug_msg = str(datetime.now()) + " [DEBUG] " + debug_msg
     #logging.info(str(info_msg))
-    print(debug_msg)
+    print(colored(debug_msg, color))
 
 
-def eprint(*args):
+def eprint(*args, color = 'red'):
     error_msg = ' '.join([str(i) for i in args])
     error_msg = str(datetime.now()) + " [ERROR] " + error_msg
     #logging.error(str(error_msg))
-    print(error_msg)
+    print(colored(error_msg, color))
 
-def wprint(*args):
+def wprint(*args, color = 'magenta'):
     warning_msg = ' '.join([str(i) for i in args])
     warning_msg = str(datetime.now()) + " [WARNING] " + warning_msg
     #logging.warning(str(warning_msg))
-    print(warning_msg)
+    print(colored(warning_msg, color))

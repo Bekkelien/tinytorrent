@@ -1,16 +1,18 @@
 ## Tinytorrent, the goal is to make this a tiny 'automatic' torrent client 
 
 - [x] Implementation of announce-list not just announce
-- [ ] Handle the announce-list in trackers and logic 
+- [ ] Handle the announce-list in trackers and logic [TCP]
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
 - [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
-- [ ] # Client IP's and Port's, use map/lambda function to speed up for loop?
+- [x] # Client IP's and Port's, use map/lambda function to speed up for loop? -> FAST enough ATM, max 74 clients to looping os ok - 
 - [ ] Implementation of tracking of how much data downloaded this session
-- [ ] Implement tracker protocol logic as of now only supports UDP tracking
-- [ ] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
+- [ ] Implement HTTP tracking/protocol 
+- [x] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
+- [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
 - [ ] Handle pice length for a torrent file 
-- [ ] Find out if udp tracker protocol need to support IPv6 or that all that stuff is IPv4
+- [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html
+- [ ] Search for more client id's to make sure as many as possible are known 
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 ```python
@@ -19,4 +21,10 @@
     ►☺ b'\x00\x00\x00\x00\x00\x10\x00\x01'
     ►♦ b'\x00\x00\x00\x00\x00\x10\x00\x04'
     ►  b'\x00\x00\x00\x00\x00\x10\x00\x00'
+        '[ 0   1   2   3   4   5   6  7]'
+
+    '\x10 -> 5 = BEP-10 Extension Protocol' 
+    '\x18 -> 5 = ?'
+    '\x05 -> 7 = '  
+    '\x04 -> 7 = BEP-6 Fast Extension '
 ```

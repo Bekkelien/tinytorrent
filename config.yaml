@@ -14,4 +14,4 @@ tcp:
   handshake_buffer: 4096 # Unknown max size
 
 client:
-  peer_id: '-BB2080-39392343241'
+  peer_id: '-BA2080-39392343241'
