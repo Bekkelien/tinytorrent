@@ -1,14 +1,14 @@
 ## Tinytorrent, the goal is to make this a tiny 'automatic' torrent client 
 
 - [x] Implementation of announce-list not just announce
+- [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
+- [x] # Client IP's and Port's, use map/lambda function to speed up for loop? -> FAST enough ATM, max 74 clients to looping os ok - 
+- [x] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
 - [ ] Handle the announce-list in trackers and logic [TCP]
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
-- [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
-- [x] # Client IP's and Port's, use map/lambda function to speed up for loop? -> FAST enough ATM, max 74 clients to looping os ok - 
 - [ ] Implementation of tracking of how much data downloaded this session
 - [ ] Implement HTTP tracking/protocol 
-- [x] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
 - [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
 - [ ] Handle pice length for a torrent file 
 - [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html
