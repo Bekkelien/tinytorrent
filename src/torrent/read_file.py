@@ -47,7 +47,7 @@ class TorrentFile():
                 for i in range(len(paths)):
                     files.append({'length': paths[i][b'length'], 'path': [paths[i][b'path'][0].decode()]})
             else:
-                eprint("Reading torrent file failed: multiple paths within one file path")
+                eprint("Reading torrent file failed: multiple paths within one file path") # NOTE: Overkill error handling? Maybe this never happens?
 
             self.data['info'] = {'files': files, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
@@ -55,6 +55,7 @@ class TorrentFile():
             length = data[b'info'][b'length']
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
+        iprint("New torrent:", self.data['info']['name'])
         return self.data, info_hash
 
 if __name__ == '__main__':

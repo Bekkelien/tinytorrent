@@ -13,6 +13,15 @@
 - [ ] Handle pice length for a torrent file 
 - [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html
 - [ ] Search for more client id's to make sure as many as possible are known 
+- [ ] Rename sending messages name currently: message 
+- [ ] Socket tracking is now a mess
+- [ ] Documentation of functions and classes
+- [ ] To many dependencies from a to b and c and over back into d ++
+- [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
+- [ ] Create Tests- pytest
+- [ ] Add type hints? 
+- [ ] Map peers and what state they are in 
+- [ ] UDP tracker gives more then 74 peers -> Announce accepted, re-announce interval: 1666 leechers: 2 seeders: 236 client ip addresses count: 199 -> Are this new since spec says max 74 or is it not referring to peers? 
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 ```python

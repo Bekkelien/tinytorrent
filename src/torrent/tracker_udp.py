@@ -8,8 +8,8 @@ from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 
 # Internal 
 from config import Config
-from read_file import TorrentFile
 from tcp import PeerWire
+from read_file import TorrentFile
 from helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
@@ -36,7 +36,6 @@ class UdpTracker:
         self.hostname = torrent['announce'] # Dose not support announce-list
         self.tracker_ip = gethostbyname(urlparse(self.hostname).hostname) 
         self.tracker_port = urlparse(self.hostname).port
-        print(self.tracker_ip, self.tracker_port)
 
         # Network settings UDP
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -78,7 +77,7 @@ class UdpTracker:
                                             event,  
                                             0,                  # Sender IP address - 0 = Default
                                             key,    
-                                            -1,                 # n clients, -1 = max = 74 
+                                            -1,                 # n clients, -1 [Spec says 74 is max but i get more than this] 
                                             self.tracker_port)  # 98 Bytes
 
         # Send announce message
@@ -100,10 +99,11 @@ class UdpTracker:
             for index in range(6,len(message),6):
                 ip = inet_ntoa(message[index-6:index-2])        # IP 4 Bytes
                 port = unpack("!H", message[index-2:index])[0]  # Port 2 Bytes
-                tracker_address = [ip,port]
+                tracker_address = [ip,port]                     # TODO: Add Cleaning if port or ip is missing?
                 client_addresses.append(tracker_address)    
 
-            iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
+            iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders,\
+                                                                     "client ip addresses count:", len(client_addresses))
             return client_addresses
 
         else:
@@ -149,4 +149,4 @@ if __name__ == '__main__':
             udp_connection.connect() 
             client_addresses = udp_connection.announce(Event.none.value) 
             udp_connection.scraping()
-            dprint("Client Addresses:", client_addresses[0:5])
+            #dprint("Client Addresses:", client_addresses[0:5])
