@@ -1,5 +1,12 @@
 ## Tinytorrent, the goal is to make this a tiny 'automatic' torrent client 
 
+
+#### Create a torrent
+```console
+Windows: python ./create_torrent/make.py -f <foldername>
+```
+
+### TIP's
 - [x] Implementation of announce-list not just announce
 - [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
 - [x] # Client IP's and Port's, use map/lambda function to speed up for loop? -> FAST enough ATM, max 74 clients to looping os ok - 
