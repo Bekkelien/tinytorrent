@@ -135,6 +135,14 @@ class PeerWire():
                 iprint("Connected to peer with peer client ID:", response_peer_id, color='green')
                 self._extensions(response_reserved) # NOTE: No handling ATM
                 self._peer_client_software(response_peer_id)
+
+                # BITFIELD: #TOD
+                try:
+                    response = clientSocket.recv(4096)
+                    iprint("Bitfield no what is this message?",response)
+                
+                except:
+                    dprint("No bitfield message after handshake")
                 
                 # TODO: remove this from class, should be separate 
                 try:
@@ -142,6 +150,7 @@ class PeerWire():
                     one_peer_connected_test.state_message(Message.interested)
                     #one_peer_connected_test.have_message(0)
                     #one_peer_connected_test.have_message(1)
+ 
                 except:
                     print("THIS IS A BAD IDEA")
 
@@ -154,6 +163,7 @@ class PeerWire():
             wprint("Peer handshake failed for peer:", client_address[0], "::" , client_address[1])
 
         # Unless ok Validation, handshake has failed 
+
         return False
 
 

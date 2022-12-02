@@ -28,12 +28,15 @@ class Event(Enum):
     started = 2
     stopped = 3
 
+# BUG: Connection is never closed
 class UdpTracker:
     def __init__(self, torrent, info_hash): 
 
         self.name = torrent['info']['name']
         self.info_hash = info_hash
         self.hostname = torrent['announce'] # Dose not support announce-list
+
+        # BUG; Fails if we dont have a network connection
         self.tracker_ip = gethostbyname(urlparse(self.hostname).hostname) 
         self.tracker_port = urlparse(self.hostname).port
 
@@ -132,7 +135,6 @@ class UdpTracker:
 
 
 if __name__ == '__main__':
-
     """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
 
     PATH = Path('./src/files/')
