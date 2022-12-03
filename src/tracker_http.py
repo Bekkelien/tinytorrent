@@ -53,9 +53,9 @@ class HttpTracker:
 
         response = requests.get(self.hostname, params=parse.urlencode(params), timeout=config['http']['timeout'])
 
-        if response.status_code == 200:
+        if response.status_code == 200: # REFACTOR
             if 'failure' in str(response.content): # NOTE: Not an insane good solution, TODO: warning message handling of these as well
-                eprint("Failed to get peers from tracker, reason:", response.content)
+                eprint("Failed to get peers from tracker: ", response.content)
             
             else:
                 iprint("Tracker HTTP/HTTPS response accepted") # Make more error stuff
@@ -83,7 +83,7 @@ class HttpTracker:
         self.interval = content[b'interval'] if b'interval' in content else wprint("Tracker did not send interval response")
         self.peers = content[b'peers'] if b'peers' in content else wprint("Tracker did not send peers response")
         # min interval
-
+        print(self.peers)
         # TODO: check if we have peers?
         if len(self.peers) >= 6: # NOTE: 6 bytes min? and also verify a lot here
             #
@@ -102,6 +102,40 @@ class HttpTracker:
             eprint("Tracker did not respond with any peers")
         
         # handel this
+    
+    def scrape(self): 
+        # This adds more or less just total downloaded and reduce bandwidth of tracker
+        # but seems to have low support or many conventions? 
+        
+        # Check if tracker supports scrape
+        index_last_endpoint = self.hostname.rfind('/')
+        
+        if not 'announce' in self.hostname[index_last_endpoint:]:
+            wprint("Tracker:", self.hostname,  "does not support scrape")
+            return 
+        
+        # NOTE: Can be used for multiple torrents from same tracker: ?info_hash=aa&info_hash=bb&info_hash=cc
+        # Currently only support for one
+        params= {
+                'info_hash': self.info_hash,             
+                 }
+        #response = requests.get(self.hostname, params=parse.urlencode(params), timeout=config['http']['timeout'])
+        response = requests.get(self.hostname + '?', params= parse.urlencode(params), timeout=config['http']['timeout'])
+        dprint(self.hostname + '?' + parse.urlencode(params))
+        
+        if response.status_code != 200:
+            wprint("Failed to scrape from tracker:", self.hostname)
+            return
+        
+        if 'failure' in str(response.content):
+            wprint("Failed to scrape from tracker:", self.hostname, "reason:", response.content)
+            return
+        
+        # NOTE: Assuming we are good here but we can be here with bad response
+        # Add handling 
+        iprint(bdecode(response.content))
+
+
 
 
 #b"d8:intervali1800e12:min intervali300e5:peers84:K!\x9f\x1b\xc8\xd5.'\xff\xebl\x8cXY\x08\xfe\x1a\xe1[2_\xd4\x81\xaa\\\xbak\x05\xea\xaaU\xdd\x83\xf0-\xec.'\xff\xebl\x8cXY\x08\xfe\x1a\xe1zn\x87\xa7\xff\xdeXY\x08\xfe\x1a\xe1XY\x08\xfe\x1a\xe1Q3\xb0\xb9\xcd\x05\x18\x14\x1a\xa7\xc4\xebK!\x9f\x1b\xc8\xd510:tracker id5:84822e"
@@ -112,6 +146,8 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     files = ['kalilinux.torrent', 'ubuntu.torrent', 'altlinux.torrent', 'slackware.torrent']
+    #files = [ 'ubuntu.torrent', 'altlinux.torrent', 'slackware.torrent']
+    
 
     for file in files:
         file = TorrentFile(PATH / file)
@@ -121,5 +157,6 @@ if __name__ == '__main__':
         if any(protocol in torrent['announce'] for protocol in ['http', 'https']):
             trackers = HttpTracker(torrent, info_hash)
             if trackers.announce(EventHttp.started):
-                trackers.tracker_response()
+                client_addresses = trackers.tracker_response()
+                trackers.scrape()
             

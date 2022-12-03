@@ -8,7 +8,7 @@ udp:
 
 
 http:
-  timeout: 1
+  timeout: 5 # Reduce when bug is fixed
 
 tcp:
   timeout: 1

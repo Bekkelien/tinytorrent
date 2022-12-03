@@ -27,12 +27,14 @@ if __name__ == '__main__':
         udp_connection = UdpTracker(torrent, info_hash)
         udp_connection.connect() 
         client_addresses = udp_connection.announce(EventUdp.none.value) 
-        udp_connection.scraping()
+        udp_connection.scrape()
     
     elif any(protocol in torrent['announce'] for protocol in ['http', 'https']):
         trackers = HttpTracker(torrent, info_hash)
         if trackers.announce(EventHttp.started):
             client_addresses = trackers.tracker_response()
+            trackers.scrape()
+            
             
     else:
         raise Exception("Unknown tracker protocol")

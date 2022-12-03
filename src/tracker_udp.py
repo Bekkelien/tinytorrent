@@ -112,7 +112,7 @@ class UdpTracker:
             wprint("Announce response failure")
 
     #@timer
-    def scraping(self):
+    def scrape(self):
         transaction_id = random.getrandbits(32)
         message = pack('>QII20s', self.connection_id, Action.scrape.value, transaction_id, self.info_hash)
         
@@ -149,7 +149,7 @@ if __name__ == '__main__':
             udp_connection = UdpTracker(torrent, info_hash)
             udp_connection.connect() 
             client_addresses = udp_connection.announce(EventUdp.none.value) 
-            udp_connection.scraping()
+            udp_connection.scrape()
             #dprint("Client Addresses:", client_addresses[0:5])
 
 

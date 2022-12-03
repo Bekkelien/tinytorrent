@@ -19,6 +19,9 @@ Windows: python ./create_torrent/make.py -f <foldername>
         tracker_address = [ip,port]                     # TODO: Add Cleaning if port or ip is missing?
         client_addresses.append(tracker_address)   
 ```
+```console
+requests.exceptions.ConnectTimeout: HTTPConnectionPool(host='tracker.kali.org', port=6969): Max retries exceeded with url: xxxxxx (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x00000249393811E0>, 'Connection to tracker.kali.org timed out. (connect timeout=1)'))
+```
 
 ### TIP's
 - [x] Implementation of announce-list not just announce
@@ -49,6 +52,7 @@ Windows: python ./create_torrent/make.py -f <foldername>
 - [ ] Should peer id be one for en run if software or change each time?
 - [ ] How to validate a tracker when using HTTP/HTTPS? or not?
 - [ ] Implement scrape for HTTP/HTTPS
+- [ ] Create verification og a content of a torrent file 
 
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
