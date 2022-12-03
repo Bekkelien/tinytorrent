@@ -1,4 +1,4 @@
 bencoding==0.2.6
-py3createtorrent==1.1.0
 PyYAML==6.0
+requests==2.28.1
 termcolor==2.1.1

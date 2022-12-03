@@ -8,7 +8,6 @@ from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 
 # Internal 
 from config import Config
-from tcp import PeerWire
 from read_file import TorrentFile
 from helpers import iprint, eprint, wprint, dprint, timer
 
@@ -22,7 +21,7 @@ class Action(Enum):
     scrape = 2 
     error = 3
 
-class Event(Enum):
+class EventUdp(Enum):
     none = 0
     completed = 1
     started = 2
@@ -98,7 +97,7 @@ class UdpTracker:
 
             # Client IP's and Port's 
             client_addresses = []
-            message = response[0][20:]             
+            message = response[0][20:]    
             for index in range(6,len(message),6):
                 ip = inet_ntoa(message[index-6:index-2])        # IP 4 Bytes
                 port = unpack("!H", message[index-2:index])[0]  # Port 2 Bytes
@@ -138,7 +137,7 @@ if __name__ == '__main__':
     """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
 
     PATH = Path('./src/files/')
-    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent','ubuntu.torrent','big-buck-bunny.torrent']
+    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent','big-buck-bunny.torrent']
 
     for file in files:
         file = TorrentFile(PATH / file)
@@ -149,6 +148,9 @@ if __name__ == '__main__':
         if 'udp' in torrent['announce']:
             udp_connection = UdpTracker(torrent, info_hash)
             udp_connection.connect() 
-            client_addresses = udp_connection.announce(Event.none.value) 
+            client_addresses = udp_connection.announce(EventUdp.none.value) 
             udp_connection.scraping()
             #dprint("Client Addresses:", client_addresses[0:5])
+
+
+            

@@ -1,13 +1,14 @@
 debug: true
 
 udp:
-  timeout: 3
+  timeout: 1
   connection_buffer: 16
   announce_buffer: 4096 # Unknown max size
   scraping_buffer: 32 # In reality [20] but 32 to match hardware and network reality
 
 
-#4096
+http:
+  timeout: 1
 
 tcp:
   timeout: 1
@@ -15,5 +16,5 @@ tcp:
   state_message_buffer: 16 # Max size should be 5 
   message_buffer: 4096 # NOTE: LARGE? Need to look into how large this can be! - remember one bit for each piece?
 
-client:
-  peer_id: '-TI2080-39392343241' # TI = TinyTorrent client
+client: 
+  peer_id: '-TI2080-393923432422' # use 12chars? - TI = TinyTorrent client - Add id generated at start (TODO)

@@ -34,7 +34,7 @@ class Extensions:
 
 @dataclass
 class Clients:
-    clients = json.load(open('./src/torrent/clients.json'))
+    clients = json.load(open('./src/clients.json'))
 
  
 class PeerMessage():

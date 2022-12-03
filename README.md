@@ -3,7 +3,21 @@
 
 #### Create a torrent
 ```console
+Place files in a folder within the ./create_torrent/files folder then run this command:
 Windows: python ./create_torrent/make.py -f <foldername>
+```
+
+### BUGS
+
+```console
+    # BUG, Refactor, and seems to drop one IP|Port address
+    client_addresses = []
+    message = response[0][20:]    
+    for index in range(6,len(message),6):
+        ip = inet_ntoa(message[index-6:index-2])        # IP 4 Bytes
+        port = unpack("!H", message[index-2:index])[0]  # Port 2 Bytes
+        tracker_address = [ip,port]                     # TODO: Add Cleaning if port or ip is missing?
+        client_addresses.append(tracker_address)   
 ```
 
 ### TIP's
@@ -11,6 +25,7 @@ Windows: python ./create_torrent/make.py -f <foldername>
 - [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
 - [x] # Client IP's and Port's, use map/lambda function to speed up for loop? -> FAST enough ATM, max 74 clients to looping os ok - 
 - [x] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
+- [ ] Create unique peer_id at start up of program
 - [ ] Handle the announce-list in trackers and logic [TCP]
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
@@ -18,7 +33,7 @@ Windows: python ./create_torrent/make.py -f <foldername>
 - [ ] Implement HTTP tracking/protocol 
 - [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
 - [ ] Handle pice length for a torrent file 
-- [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html
+- [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html and HTTP/HTTPS(or does this only return IPv4 stuff?)?
 - [ ] Search for more client id's to make sure as many as possible are known 
 - [ ] Rename sending messages name currently: message 
 - [ ] Socket tracking is now a mess
@@ -29,6 +44,12 @@ Windows: python ./create_torrent/make.py -f <foldername>
 - [ ] Add type hints? 
 - [ ] Map peers and what state they are in 
 - [ ] UDP tracker gives more then 74 peers -> Announce accepted, re-announce interval: 1666 leechers: 2 seeders: 236 client ip addresses count: 199 -> Are this new since spec says max 74 or is it not referring to peers? 
+- [ ] Add check and verify IP addresses
+- [ ] Make a function for parsing IP addresses and ports, (Include IPv6?)
+- [ ] Should peer id be one for en run if software or change each time?
+- [ ] How to validate a tracker when using HTTP/HTTPS? or not?
+- [ ] Implement scrape for HTTP/HTTPS
+
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 ```python
