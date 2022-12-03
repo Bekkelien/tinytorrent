@@ -22,8 +22,10 @@ def timer(func):
 
 #logger = logging.getLogger(__name__)
 
-def iprint(*args, color = 'white'):
+def iprint(*args, color = 'white', network = ''):
     info_msg = ' '.join([str(i) for i in args])
+    if 'inn' in network: info_msg = "<----- " + info_msg
+    if 'out' in network: info_msg = "-----> " + info_msg
     info_msg = str(datetime.now()) + " [INFO] " + info_msg
     #logging.info(str(info_msg))
     print(colored(info_msg, color))

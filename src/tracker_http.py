@@ -23,21 +23,17 @@ class EventHttp():
     stopped = 'stopped'
     completed = 'completed'
 
-# 6881-6889 Ports
 # TODO: ADD INN SUPPORT FOR stats downloaded uploaded ++
-
 class HttpTracker:
     def __init__(self, torrent, info_hash): 
         self.name = torrent['info']['name']
         self.info_hash = info_hash
         self.hostname = torrent['announce'] # Dose not support announce-list
         
-
     def announce(self, event, port = 6881, compact = 1):
 
         self.content = None # TODO: Better name
 
-        # TODO: Implement for all ports? iterator?
         params = {
                     'info_hash': self.info_hash,
                     'peer_id': config['client']['peer_id'], # BUG: Cant be in config since should be unique 
@@ -54,20 +50,22 @@ class HttpTracker:
 
         response = requests.get(self.hostname, params=parse.urlencode(params), timeout=config['http']['timeout'])
 
-        if response.status_code == 200: # REFACTOR
-            if 'failure' in str(response.content): # NOTE: Not an insane good solution, TODO: warning message handling of these as well
-                eprint("Failed to get peers from tracker: ", response.content)
-            
-            else:
-                iprint("Tracker HTTP/HTTPS response accepted") # Make more error stuff
-                self.content = response.content
-                return True
-
-        else:
+        if response.status_code != 200:
             eprint("Failed to get peers from tracker with status code:", response.status_code)
+            return False
         
-        return False
-    
+        # NOTE: Good enough error handling? or add more?
+        if 'failure' in str(response.content): # TODO: warning message handling of these as well
+            eprint("Failed to get peers from tracker: ", response.content)
+            return False
+        
+        else:
+            iprint("Tracker HTTP/HTTPS response accepted, announce ok") # Make more error stuff
+            self.content = response.content
+            
+        return True
+
+        
     #content TODO: Rename
     # Improve prints
     def tracker_response(self):
@@ -104,14 +102,12 @@ class HttpTracker:
             wprint("Tracker:", self.hostname,  "does not support scrape")
             return 
         
-        # NOTE: Can be used for multiple torrents from same tracker: ?info_hash=aa&info_hash=bb&info_hash=cc
-        # Currently only support for one
-        params= {
-                'info_hash': self.info_hash,             
-                 }
-        #response = requests.get(self.hostname, params=parse.urlencode(params), timeout=config['http']['timeout'])
+        # NOTE: No support for tracking multiple torrents from same tracker ATM
+        params= {'info_hash': self.info_hash}
+
+        # NOTE: can this fail?
         response = requests.get(self.hostname + '?', params= parse.urlencode(params), timeout=config['http']['timeout'])
-        dprint(self.hostname + '?' + parse.urlencode(params))
+        # dprint(self.hostname + '?' + parse.urlencode(params))
         
         if response.status_code != 200:
             wprint("Failed to scrape from tracker:", self.hostname)
@@ -121,16 +117,12 @@ class HttpTracker:
             wprint("Failed to scrape from tracker:", self.hostname, "reason:", response.content)
             return
         
-        # NOTE: Assuming we are good here but we can be here with bad response
-        # Add handling 
+        # NOTE: Assuming we are good here but we can be here with bad response Add handling?
         iprint(bdecode(response.content))
 
 
 
-
-#b"d8:intervali1800e12:min intervali300e5:peers84:K!\x9f\x1b\xc8\xd5.'\xff\xebl\x8cXY\x08\xfe\x1a\xe1[2_\xd4\x81\xaa\\\xbak\x05\xea\xaaU\xdd\x83\xf0-\xec.'\xff\xebl\x8cXY\x08\xfe\x1a\xe1zn\x87\xa7\xff\xdeXY\x08\xfe\x1a\xe1XY\x08\xfe\x1a\xe1Q3\xb0\xb9\xcd\x05\x18\x14\x1a\xa7\xc4\xebK!\x9f\x1b\xc8\xd510:tracker id5:84822e"
-
-# BUG UBUNTU dose not give many or any peers back!
+# BUG UBUNTU dose not give many or any peers back, why?!
 if __name__ == '__main__':
     """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
 

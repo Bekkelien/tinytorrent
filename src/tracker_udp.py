@@ -99,7 +99,7 @@ class UdpTracker:
             client_addresses = tracker_addresses_to_array(response[0][20:]) #TODO: response better naming?
             if client_addresses:  
 
-                iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
+                iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders, network='inn')
                 return client_addresses
 
             # Handle this

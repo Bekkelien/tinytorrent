@@ -2,6 +2,7 @@
     "cSpell.words": [
         "dprint",
         "iprint",
+        "tinytorrent",
         "wprint"
     ],
     "python.linting.enabled": false,
