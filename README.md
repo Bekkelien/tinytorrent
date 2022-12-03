@@ -9,6 +9,14 @@ Linux: ?
 macOS: ?
 ```
 
+### Testing (To be implemented)
+```console
+run:
+pytest
+pytest -s # To display the prints
+```
+
+
 ### BUGS
 
 ```console
