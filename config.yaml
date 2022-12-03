@@ -1,7 +1,7 @@
 debug: true
 
 udp:
-  timeout: 1
+  timeout: 5 # Reduce when bug is fixed
   connection_buffer: 16
   announce_buffer: 4096 # Unknown max size
   scraping_buffer: 32 # In reality [20] but 32 to match hardware and network reality
@@ -11,7 +11,7 @@ http:
   timeout: 5 # Reduce when bug is fixed
 
 tcp:
-  timeout: 1
+  timeout: 5 # Reduce when bug is fixed
   handshake_buffer: 4096 # Unknown max size
   state_message_buffer: 16 # Max size should be 5 
   message_buffer: 4096 # NOTE: LARGE? Need to look into how large this can be! - remember one bit for each piece?

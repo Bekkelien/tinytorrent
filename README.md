@@ -53,7 +53,9 @@ requests.exceptions.ConnectTimeout: HTTPConnectionPool(host='tracker.kali.org', 
 - [ ] How to validate a tracker when using HTTP/HTTPS? or not?
 - [ ] Implement scrape for HTTP/HTTPS
 - [ ] Create verification og a content of a torrent file 
-
+- [ ] fix import stuff when running tests, but main in main?
+- [ ] The way it is structured now makes it hard to break out of a state if the tracker does not respond with proper responses
+- [ ] Add symbol if data is in and out in prints
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 ```python

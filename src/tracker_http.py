@@ -11,6 +11,7 @@ from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 # Internals 
 from config import Config
 from read_file import TorrentFile
+from networking import tracker_addresses_to_array
 from helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
@@ -75,32 +76,21 @@ class HttpTracker:
         self.complete = None
         self.incomplete = None
         self.interval = None
-        self.peers = b''
+        self.peers = b'' # TODO: RENAME
 
         content = bdecode(self.content)
         self.complete = content[b'complete'] if b'complete' in content else wprint("Tracker did not send complete response")
         self.incomplete = content[b'incomplete'] if b'incomplete' in content else wprint("Tracker did not send incomplete response")
         self.interval = content[b'interval'] if b'interval' in content else wprint("Tracker did not send interval response")
         self.peers = content[b'peers'] if b'peers' in content else wprint("Tracker did not send peers response")
-        # min interval
-        print(self.peers)
-        # TODO: check if we have peers?
-        if len(self.peers) >= 6: # NOTE: 6 bytes min? and also verify a lot here
-            #
-            client_addresses = []
-            for index in range(6,len(self.peers),6):
-                ip = inet_ntoa(self.peers[index-6:index-2]) 
-                port = unpack("!H", self.peers[index-2:index])[0]  # Port 2 Bytes
-                tracker_address = [ip,port]                     # TODO: Add Cleaning if port or ip is missing?
-                client_addresses.append(tracker_address)   
-            
-            iprint("Tracker HTTP/HTTPS response, complete:", self.complete, "incomplete:", self.incomplete, \
-                                                            "interval:", self.interval, "ip addresses/peers:",len(client_addresses))
+        
+        client_addresses = tracker_addresses_to_array(self.peers)
+        
+        if client_addresses:
+            iprint("Tracker responded HTTP/HTTPS, complete:", self.complete, "incomplete:", self.incomplete, \
+                                                            "interval:", self.interval, "peers:",len(client_addresses))
             return client_addresses
 
-        else:
-            eprint("Tracker did not respond with any peers")
-        
         # handel this
     
     def scrape(self): 

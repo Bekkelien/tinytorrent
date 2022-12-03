@@ -9,6 +9,7 @@ from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 # Internal 
 from config import Config
 from read_file import TorrentFile
+from networking import tracker_addresses_to_array
 from helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
@@ -94,20 +95,14 @@ class UdpTracker:
         # Validation
         if Action.announce.value == response_action and transaction_id == response_transaction_id:
             interval, leechers, seeders = message[2], message[3], message[4]
+           
+            client_addresses = tracker_addresses_to_array(response[0][20:]) #TODO: response better naming?
+            if client_addresses:  
 
-            # Client IP's and Port's 
-            client_addresses = []
-            message = response[0][20:]    
-            for index in range(6,len(message),6):
-                ip = inet_ntoa(message[index-6:index-2])        # IP 4 Bytes
-                port = unpack("!H", message[index-2:index])[0]  # Port 2 Bytes
-                tracker_address = [ip,port]                     # TODO: Add Cleaning if port or ip is missing?
-                client_addresses.append(tracker_address)    
+                iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
+                return client_addresses
 
-            iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders,\
-                                                                     "client ip addresses count:", len(client_addresses))
-            return client_addresses
-
+            # Handle this
         else:
             wprint("Announce response failure")
 
@@ -137,7 +132,7 @@ if __name__ == '__main__':
     """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
 
     PATH = Path('./src/files/')
-    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent','big-buck-bunny.torrent']
+    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent','big-buck-bunny.torrent','tears-of-steel.torrent']
 
     for file in files:
         file = TorrentFile(PATH / file)
@@ -145,12 +140,15 @@ if __name__ == '__main__':
         torrent, info_hash = file.read_torrent_file()
 
         # TODO: Fix this for list as well 
-        if 'udp' in torrent['announce']:
-            udp_connection = UdpTracker(torrent, info_hash)
-            udp_connection.connect() 
-            client_addresses = udp_connection.announce(EventUdp.none.value) 
-            udp_connection.scrape()
-            #dprint("Client Addresses:", client_addresses[0:5])
+        try:
+            if 'udp' in torrent['announce']:
+                udp_connection = UdpTracker(torrent, info_hash)
+                udp_connection.connect() 
+                client_addresses = udp_connection.announce(EventUdp.none.value) 
+                udp_connection.scrape()
+                #dprint("Client Addresses:", client_addresses[0:5])
 
+        except Exception as e:
+            eprint("TEMP HAX HANDLER:", e)
 
             
