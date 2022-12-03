@@ -1,11 +1,11 @@
 
 # Internals
-from read_file import TorrentFile
-from tracker_udp import UdpTracker, EventUdp
-from tracker_http import HttpTracker, EventHttp
-from tcp import PeerWire
+from src.read_file import TorrentFile
+from src.tracker_udp import UdpTracker, EventUdp
+from src.tracker_http import HttpTracker, EventHttp
+from src.tcp import PeerWire
 
-from helpers import iprint, eprint, wprint, dprint, timer
+from src.helpers import iprint, eprint, wprint, dprint, timer
 
 if __name__ == '__main__':
 

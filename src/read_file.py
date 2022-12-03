@@ -5,7 +5,7 @@ from pprint import pprint
 from bencoding import bdecode, bencode 
 
 # Internals
-from helpers import iprint, eprint, wprint, dprint, timer
+from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # INFO:
 # https://en.wikipedia.org/wiki/Torrent_file

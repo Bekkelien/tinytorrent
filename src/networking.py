@@ -1,7 +1,7 @@
 from struct import pack, unpack
 from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 
-from helpers import iprint, eprint, wprint, dprint, timer
+from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # TODO: rename function  to something good 
 # @timer Fast enough 

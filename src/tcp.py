@@ -7,8 +7,8 @@ from socket import socket, SOCK_STREAM, AF_INET
 #from functools import lru_cache
 
 # Internals
-from config import Config
-from helpers import iprint, eprint, wprint, dprint, timer
+from src.config import Config
+from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
 config = Config().get_config()

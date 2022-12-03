@@ -7,10 +7,10 @@ from urllib.parse import urlparse
 from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 
 # Internal 
-from config import Config
-from read_file import TorrentFile
-from networking import tracker_addresses_to_array
-from helpers import iprint, eprint, wprint, dprint, timer
+from src.config import Config
+from src.read_file import TorrentFile
+from src.networking import tracker_addresses_to_array
+from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
 config = Config().get_config()

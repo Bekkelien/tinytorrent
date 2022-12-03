@@ -4,7 +4,7 @@ from termcolor import colored
 from datetime import datetime
 
 # Internal 
-from config import Config
+from src.config import Config
 
 # Configuration settings
 config = Config().get_config()
