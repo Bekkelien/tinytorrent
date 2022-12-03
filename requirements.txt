@@ -1,4 +1,5 @@
 bencoding==0.2.6
+pytest==7.2.0
 PyYAML==6.0
 requests==2.28.1
 termcolor==2.1.1

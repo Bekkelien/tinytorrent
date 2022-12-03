@@ -12,16 +12,6 @@ macOS: ?
 ### BUGS
 
 ```console
-# BUG, Refactor, and seems to drop one IP|Port address
-    client_addresses = []
-    message = response[0][20:]    
-    for index in range(6,len(message),6):
-        ip = inet_ntoa(message[index-6:index-2])        # IP 4 Bytes
-        port = unpack("!H", message[index-2:index])[0]  # Port 2 Bytes
-        tracker_address = [ip,port]                     # TODO: Add Cleaning if port or ip is missing?
-        client_addresses.append(tracker_address)   
-```
-```console
 # BUG Fully terminates tinytorrent ATM FIX in (handling of no response in UDP tracker) 
     requests.exceptions.ConnectTimeout: HTTPConnectionPool(host='tracker.kali.org', port=6969): Max retries exceeded with url: xxxxxx (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x00000249393811E0>, 'Connection to tracker.kali.org timed out. (connect timeout=1)'))
 ```
