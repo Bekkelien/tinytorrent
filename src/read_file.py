@@ -18,7 +18,7 @@ class TorrentFile():
         self.data = {}
         self.file_path = Path(torrent_file)
 
-    @timer
+    #@timer
     def read_torrent_file(self):
 
         iprint("Reading in torrent file:", self.file_path.name)
@@ -55,7 +55,7 @@ class TorrentFile():
             length = data[b'info'][b'length']
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
-        iprint("New torrent:", self.data['info']['name'])
+        iprint("New torrent:", self.data['info']['name'], color="green")
         return self.data, info_hash
 
 if __name__ == '__main__':

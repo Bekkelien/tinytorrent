@@ -1,9 +1,44 @@
-from struct import pack, unpack
-from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
+import requests
 
-from src.helpers import iprint, eprint, wprint, dprint, timer
+from struct import unpack
+from socket import inet_ntoa
 
-# TODO: rename function  to something good 
+# Internals 
+from src.config import Config
+from src.helpers import iprint, eprint, wprint
+
+# Configuration settings
+config = Config().get_config()
+
+
+# Make only for http requests? may be to generic else
+def get_request(url, params, message='None'):
+    """ Returns content from a get request"""
+    try:
+        response = requests.get(url, params=params, timeout=config['http']['timeout'])
+        if response.status_code != 200:
+            wprint("Request:", message, "failed with status code:", response.status_code)
+            return False
+
+        if 'failure' in str(response.content): # TODO: warning message handling of these as well
+            wprint("Response:", message, "failure, reason:", response.content)
+            return False    
+
+        return response.content
+
+    except requests.exceptions.HTTPError as errh:
+        eprint ("Request Http Error:", errh)
+    except requests.exceptions.ConnectionError as errc:
+        eprint ("Request Connection Error:", errc)
+    except requests.exceptions.Timeout as errt:
+        eprint ("Request Timeout Error:", errt)
+    except requests.exceptions.RequestException as err:
+        eprint ("Request critical error:", err)
+    
+    return False
+
+
+# TODO: rename function  to something good (Make more generic?)
 # @timer Fast enough 
 def tracker_addresses_to_array(payload_addresses, split=6):
     """ hex -> 2D list of addresses """

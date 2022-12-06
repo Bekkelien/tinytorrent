@@ -132,7 +132,7 @@ class PeerWire():
             # Validate
             if self.info_hash == response_info_hash:
                 response_peer_id = response[4]
-                iprint("Connected to peer with peer client ID:", response_peer_id, color='green')
+                iprint("Connected to peer with peer client ID:", response_peer_id)
                 self._extensions(response_reserved) # NOTE: No handling ATM
                 self._peer_client_software(response_peer_id)
 
