@@ -16,13 +16,17 @@ if __name__ == '__main__':
         file = TorrentFile(PATH / file)
         
         torrent, info_hash = file.read_torrent_file()
-        if 'udp' in torrent['announce']:
+
+        # Integrate list solution 
+        announce = torrent['announce']
+
+        if announce.startswith('udp'):
             udp_connection = UdpTracker(torrent, info_hash)
             udp_connection.connect() 
             client_addresses = udp_connection.announce(EventUdp.none.value) 
             udp_connection.scrape()
         
-        elif any(protocol in torrent['announce'] for protocol in ['http', 'https']):
+        elif any(announce.startswith(x) for x in ['http', 'https']):
             trackers = HttpTracker(torrent, info_hash)
             if trackers.announce(EventHttp.started):
                 client_addresses = trackers.tracker_response()

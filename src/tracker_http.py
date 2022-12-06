@@ -68,7 +68,7 @@ class HttpTracker:
                                                             "interval:", self.interval, "peers:",len(client_addresses))
             return client_addresses
 
-        # handel this
+        # TODO: handel this
     
     def scrape(self): 
         # This adds more or less just total downloaded and reduce bandwidth of tracker
@@ -91,4 +91,4 @@ class HttpTracker:
         if self.scrape_response:
             iprint("Tracker scrape response HTTP/HTTPS, complete:", self.complete, "incomplete:", self.incomplete, \
                                                 "downloaded:", self.downloaded, "interval:", self.interval)
-        # Handle this
+        # TODO: handel this
