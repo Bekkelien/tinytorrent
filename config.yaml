@@ -6,9 +6,9 @@ udp:
   announce_buffer: 4096 # Unknown max size
   scraping_buffer: 32 # In reality [20] but 32 to match hardware and network reality
 
-
 http:
   timeout: 2 # Reduce when bug is fixed
+  peer_limit: 5 # Limit of peers to keep looking in announce-list
 
 tcp:
   timeout: 2 # Reduce when bug is fixed

@@ -17,6 +17,35 @@ pytest -s # To display the prints
 ```
 
 ### TIP's'
+#### Top priority:
+- [ ] tracker_udp -> Need cleaning up, testing and error handling
+- [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
+#### Needs to be implemented
+- [ ] Create a logo for tinytorrent
+- [ ] Create unique peer_id at start up of program
+- [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
+- [ ] Implementation of tracking of how much data downloaded this session
+- [ ] Improve HTTP tracking/protocol 
+- [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
+- [ ] Handle pice length for a torrent file 
+- [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html and HTTP/HTTPS(or does this only return IPv4 stuff?)?
+- [ ] Rename sending messages name currently: message 
+- [ ] Socket tracking is now a mess
+- [ ] Documentation of functions and classes
+- [ ] To many dependencies from a to b and c and over back into d ++
+- [ ] Create Tests- pytest
+- [ ] Add type hints? 
+- [ ] Map peers and what state they are in 
+- [ ] Should peer id be one for en run if software or change each time?
+- [ ] How to validate a tracker when using HTTP/HTTPS? or not?
+- [ ] Create verification of a content of a torrent file 
+- [ ] The way it is structured now makes it hard to break out of a state if the tracker does not respond with proper responses
+- [ ] Add symbol if network data is going out or inn in print functions <---------- inn   out ------------>
+- [ ] Add multi torrents (different torrents from same tracker) http scrape?
+- [ ] Add multi port support for Http/s trackers # 6881-6889 Ports
+- [ ] Manager to put logic inn and clean up logic as much as possible
+- [ ] Implement IPv6
+#### Fixed
 - [x] Fixed requests error handling 
 - [x] Implementation of announce-list not just announce
 - [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
@@ -26,33 +55,9 @@ pytest -s # To display the prints
 - [x] Add check and verify IP addresses IPv4 addresses
 - [x] Implement scrape for HTTP/HTTPS
 - [x] fix import stuff when running tests, but main in main?
-- [ ] Create a logo for tinytorrent
-- [ ] Create unique peer_id at start up of program
-- [ ] Handle the announce-list in trackers and logic [TCP] - append all url's from list and logic for getting more peer if below threshold (15 for instance in config) then try next announce url from announce list
-- [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
-- [ ] Implementation of tracking of how much data downloaded this session
-- [ ] tracker_udp -> Need cleaning up, testing and error handling
-- [ ] Improve HTTP tracking/protocol 
-- [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
-- [ ] Handle pice length for a torrent file 
-- [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html and HTTP/HTTPS(or does this only return IPv4 stuff?)?
-- [ ] Rename sending messages name currently: message 
-- [ ] Socket tracking is now a mess
-- [ ] Documentation of functions and classes
-- [ ] To many dependencies from a to b and c and over back into d ++
-- [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
-- [ ] Create Tests- pytest
-- [ ] Add type hints? 
-- [ ] Map peers and what state they are in 
-- [ ] Make a function for parsing IP addresses and ports, (Include IPv6?)
-- [ ] Should peer id be one for en run if software or change each time?
-- [ ] How to validate a tracker when using HTTP/HTTPS? or not?
-- [ ] Create verification of a content of a torrent file 
-- [ ] The way it is structured now makes it hard to break out of a state if the tracker does not respond with proper responses
-- [ ] Add symbol if network data is going out or inn in print functions <---------- inn   out ------------>
-- [ ] Add multi torrents (different torrents from same tracker) http scrape?
-- [ ] Add multi port support for Http/s trackers # 6881-6889 Ports
-- [ ] Manager to put logic inn and clean up logic as much as possible
+- [x] Handle the announce-list in trackers and logic [TCP] - append all url's from list and logic for getting more peer if below threshold (15 for instance in config) then try next announce url from announce list
+- [x] Make a function for parsing IP addresses and ports
+
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 ```python

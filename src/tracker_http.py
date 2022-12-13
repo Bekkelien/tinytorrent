@@ -18,7 +18,7 @@ class EventHttp():
 
 # TODO: ADD INN SUPPORT FOR stats downloaded uploaded ++ (None or 0)
 class HttpTracker:
-    def __init__(self, torrent, info_hash): 
+    def __init__(self, torrent, info_hash, announce): 
         self.info_hash = info_hash
         self.complete = None
         self.incomplete = None
@@ -26,7 +26,7 @@ class HttpTracker:
         self.downloaded = None
         self.peers = b'' # TODO: RENAME
         self.name = torrent['info']['name']
-        self.hostname = torrent['announce'] # Dose not support announce-list
+        self.hostname = announce
         
         self.content = None # TODO: Better name
 
@@ -46,6 +46,7 @@ class HttpTracker:
                  }                          # NOTE: unless fixed ? 2022-12-03 00:04:55.662889 [ERROR] Failed to get peers from tracker, reason: b'd14:failure reason87:Your client\'s "key" paramater and the key we have for you in our database do not match.e'
 
         self.announce_response = get_request(self.hostname, parse.urlencode(params), message="announce")
+        #if len(client_addresses) >= config['http']['peer_limit']:
 
         if self.announce_response:
             iprint("Tracker HTTP/HTTPS response accepted, announce ok") 
@@ -62,6 +63,7 @@ class HttpTracker:
         self.peers = content[b'peers'] if b'peers' in content else wprint("Tracker did not send peers response")
         
         client_addresses = tracker_addresses_to_array(self.peers)
+
         
         if client_addresses:
             iprint("Tracker responded HTTP/HTTPS, complete:", self.complete, "incomplete:", self.incomplete, \
@@ -89,6 +91,5 @@ class HttpTracker:
 
         # NOTE: Can be numbers from last announce/tracking stuff
         if self.scrape_response:
-            iprint("Tracker scrape response HTTP/HTTPS, complete:", self.complete, "incomplete:", self.incomplete, \
-                                                "downloaded:", self.downloaded, "interval:", self.interval)
+            iprint("Tracker scrape response HTTP/HTTPS:", self.scrape_response)
         # TODO: handel this
