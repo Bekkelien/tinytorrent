@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 # Internals 
 from src.config import Config
-from src.networking import tracker_addresses_to_array, get_request
 from src.helpers import iprint, eprint, wprint, dprint
+from src.networking import tracker_addresses_to_array, get_request
 
 # Configuration settings
 config = Config().get_config()
@@ -27,17 +27,18 @@ class HttpTracker:
         self.peers = b'' # TODO: RENAME
         self.name = torrent['info']['name']
         self.hostname = announce
+        self.announce_response = None
         
         self.content = None # TODO: Better name
 
-    def announce(self, event, port = 6881, compact = 1):
+    def announce(self, event, port=6881, compact=1):
 
         params = {  'info_hash': self.info_hash,
                     'peer_id': config['client']['peer_id'], # BUG: Cant be in config since should be unique 
-                    'uploaded': 0,
-                    'downloaded': 0,
+                    'uploaded': 0,                    # TODO: GET actual number 
+                    'downloaded': 0,                  # TODO: GET actual number 
                     'port': port, 
-                    'left': 1028128,                   # BUG: GET actual number 
+                    'left': 1028128,                  # TODO: GET actual number 
                     'compact': compact,
                     #'no_peer_id': 0,
                     'event': event,
@@ -46,7 +47,6 @@ class HttpTracker:
                  }                          # NOTE: unless fixed ? 2022-12-03 00:04:55.662889 [ERROR] Failed to get peers from tracker, reason: b'd14:failure reason87:Your client\'s "key" paramater and the key we have for you in our database do not match.e'
 
         self.announce_response = get_request(self.hostname, parse.urlencode(params), message="announce")
-        #if len(client_addresses) >= config['http']['peer_limit']:
 
         if self.announce_response:
             iprint("Tracker HTTP/HTTPS response accepted, announce ok") 
@@ -63,7 +63,6 @@ class HttpTracker:
         self.peers = content[b'peers'] if b'peers' in content else wprint("Tracker did not send peers response")
         
         client_addresses = tracker_addresses_to_array(self.peers)
-
         
         if client_addresses:
             iprint("Tracker responded HTTP/HTTPS, complete:", self.complete, "incomplete:", self.incomplete, \
@@ -72,10 +71,9 @@ class HttpTracker:
 
         # TODO: handel this
     
+
+    # NOTE: This is not really important ATM, due to low tracker support and many conventions
     def scrape(self): 
-        # This adds more or less just total downloaded and reduce bandwidth of tracker
-        # but seems to have low support or many conventions? 
-        
         # Check if tracker supports scrape
         index_last_endpoint = self.hostname.rfind('/')
         
@@ -83,13 +81,13 @@ class HttpTracker:
             wprint("Tracker:", self.hostname,  "does not support scrape")
             return 
         
-        # NOTE: No support for tracking multiple torrents from same tracker ATM
+        # TODO: No support for tracking multiple torrents from same tracker ATM
         params= {'info_hash': self.info_hash}
 
-        # NOTE: can this fail?
         self.scrape_response = get_request(self.hostname + '?', parse.urlencode(params), message="scrape")
 
-        # NOTE: Can be numbers from last announce/tracking stuff
+        # TODO: Parse response
         if self.scrape_response:
             iprint("Tracker scrape response HTTP/HTTPS:", self.scrape_response)
+
         # TODO: handel this

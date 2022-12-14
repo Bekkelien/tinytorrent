@@ -28,7 +28,9 @@ class EventUdp(Enum):
     started = 2
     stopped = 3
 
+# NOTE: TODO: BUG:
 # BUG: Connection is never closed
+# NOTE: TODO: BUG:
 class UdpTracker:
     def __init__(self, torrent, info_hash, announce): 
 
@@ -98,7 +100,6 @@ class UdpTracker:
            
             client_addresses = tracker_addresses_to_array(response[0][20:]) #TODO: response better naming?
             if client_addresses:  
-
                 iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders, network='inn')
                 return client_addresses
 

@@ -26,11 +26,12 @@ if __name__ == '__main__':
 
         # NOTE: START LOGIC TEST 
         peers = 0
-        client_addresses = []
+        client_addresses, client_addresses_temp = [], []
         for announce in announce_list:
             iprint("Announce address:", announce)
 
-            if 'ipv6' in announce: 
+            if 'ipv6' in announce:
+                # TODO move into tracker protocol 
                 wprint("IPv6 is not currently supported") 
                 break
 
@@ -38,13 +39,13 @@ if __name__ == '__main__':
                 udp_connection = UdpTracker(torrent, info_hash, announce)
                 udp_connection.connect() 
                 client_addresses_temp = udp_connection.announce(EventUdp.none.value)
-                udp_connection.scrape()
+                #udp_connection.scrape()
             
             elif any(announce.startswith(x) for x in ['http', 'https']):
                 trackers = HttpTracker(torrent, info_hash, announce)
                 if trackers.announce(EventHttp.started):
                     client_addresses_temp = trackers.tracker_response() 
-                    #trackers.scrape() # TODO:
+                    #trackers.scrape() # Removed
             else:
                 raise Exception("Unknown tracker protocol")
 
@@ -66,10 +67,10 @@ if __name__ == '__main__':
 
         #NOTE: END LOGIC TEST 
 
-        peer_wire = PeerWire(info_hash, torrent)
-        for index, client_address in enumerate(client_addresses, start=1):
-            iprint("TEST CONNECTION:", index, color='blue')
-            peer_wire.handshake(client_address)
+        #peer_wire = PeerWire(info_hash, torrent)
+        #for index, client_address in enumerate(client_addresses, start=1):
+        #    iprint("TEST CONNECTION:", index, color='blue')
+        #    peer_wire.handshake(client_address)
 
             # TESTING
             #if index > 5:

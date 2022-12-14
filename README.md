@@ -1,7 +1,7 @@
 ## Tinytorrent, the goal is to make this a tiny 'automatic' torrent client 
 
 
-#### Create a torrent
+### Create a torrent
 ```console
 Place files in a folder within the ./create_torrent/files folder then run:
 Windows: python ./create_torrent/make.py -f <foldername>
@@ -16,7 +16,7 @@ pytest
 pytest -s # To display the prints
 ```
 
-### TIP's'
+## TIP's'
 #### Top priority:
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
@@ -28,7 +28,6 @@ pytest -s # To display the prints
 - [ ] Improve HTTP tracking/protocol 
 - [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
 - [ ] Handle pice length for a torrent file 
-- [ ] Implement IPv6 for UDP http://www.bittorrent.org/beps/bep_0015.html and HTTP/HTTPS(or does this only return IPv4 stuff?)?
 - [ ] Rename sending messages name currently: message 
 - [ ] Socket tracking is now a mess
 - [ ] Documentation of functions and classes
@@ -44,7 +43,8 @@ pytest -s # To display the prints
 - [ ] Add multi torrents (different torrents from same tracker) http scrape?
 - [ ] Add multi port support for Http/s trackers # 6881-6889 Ports
 - [ ] Manager to put logic inn and clean up logic as much as possible
-- [ ] Implement IPv6
+- [ ] Implement IPv6 for udp and http tracker
+
 #### Fixed
 - [x] Fixed requests error handling 
 - [x] Implementation of announce-list not just announce
