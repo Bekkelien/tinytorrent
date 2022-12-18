@@ -67,6 +67,23 @@ class TorrentFile():
 
         return self.data, info_hash
 
+    
+    def parse_torrent_file(self, block_size=20):
+        if 'announce-list' in self.data:
+            announce_list = set(self.data['announce-list'] + [self.data['announce']])
+        else:
+            announce_list = [self.data['announce']]
+        
+        pieces = int(len(self.data['info']['pieces'])/block_size)
+        size = self.data['info']['piece_length'] * pieces
+
+        iprint("Trackers:", announce_list)
+        iprint("Piece size:", self.data['info']['piece_length']/1024, "KB") # ALWAYS use ceil?
+        iprint("Number of pieces:", pieces)
+        iprint("Torrent size:", size/1024/1024, "MB")
+
+        return announce_list
+
 if __name__ == '__main__':
     """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
 
