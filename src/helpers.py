@@ -1,5 +1,6 @@
 import time
 #import logging
+#from pprint import pprint
 from termcolor import colored
 from datetime import datetime
 
@@ -36,7 +37,6 @@ def dprint(*args, color = 'yellow'):
     #logging.info(str(info_msg))
     print(colored(debug_msg, color))
 
-
 def eprint(*args, color = 'red'):
     error_msg = ' '.join([str(i) for i in args])
     error_msg = str(datetime.now()) + " [ERROR] " + error_msg
@@ -48,3 +48,17 @@ def wprint(*args, color = 'magenta'):
     warning_msg = str(datetime.now()) + " [WARNING] " + warning_msg
     #logging.warning(str(warning_msg))
     print(colored(warning_msg, color))
+
+# NOTE: Only support for one nested key
+def tprint(torrent_dict): 
+    """ Takes a dict from a torrent file and formate it for tinytorrent style prints"""
+    for key, value in torrent_dict.items():
+        if key != 'info':
+            print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {value}")
+        else:
+            for key, value in torrent_dict['info'].items():
+                if key == 'files':
+                    for i in range(len(torrent_dict['info']['files'])):
+                        print(f"{datetime.now()} [TORRENT] File {i}: {torrent_dict['info']['files'][i]}")
+    print(f"{datetime.now()} [TORRENT] Name: {torrent_dict['info']['name']}")
+    print(f"{datetime.now()} [TORRENT] Piece length: {torrent_dict['info']['piece_length']}")

@@ -1,3 +1,4 @@
+import copy
 import hashlib
 
 from pathlib import Path
@@ -5,7 +6,7 @@ from pprint import pprint
 from bencoding import bdecode, bencode 
 
 # Internals
-from src.helpers import iprint, eprint, wprint, dprint, timer
+from src.helpers import iprint, eprint, wprint, dprint, tprint, timer
 
 # INFO:
 # https://en.wikipedia.org/wiki/Torrent_file
@@ -56,6 +57,14 @@ class TorrentFile():
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
         iprint("New torrent:", self.data['info']['name'], color="green")
+
+        # NOTE: Leave this on or debug only?
+        # Print the header of a torrent file
+        info_temp = copy.deepcopy(self.data)
+        del info_temp['info']['pieces']
+        tprint(info_temp)
+        del info_temp
+
         return self.data, info_hash
 
 if __name__ == '__main__':

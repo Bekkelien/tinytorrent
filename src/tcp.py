@@ -3,7 +3,7 @@ from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass
 from socket import socket, SOCK_STREAM, AF_INET
-
+from bitstring import BitArray
 #from functools import lru_cache
 
 # Internals
@@ -14,12 +14,18 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 config = Config().get_config()
 
 class Message(Enum):
-    keepalive = -1
+    # keepalive = -1 #BUG
     choke = 0
     unchoke = 1
     interested = 2
     notinterested = 3
-    #have = 4
+    have = 4
+    bitfield = 5
+    request = 6
+    piece = 7
+    cancel = 8
+    port = 9
+
 
 @dataclass
 class Handshake: 
@@ -136,16 +142,30 @@ class PeerWire():
                 self._extensions(response_reserved) # NOTE: No handling ATM
                 self._peer_client_software(response_peer_id)
 
-                # BITFIELD: #TOD
-                try:
-                    response = clientSocket.recv(4096)
-                    iprint("Bitfield no what is this message?",response)
-                
-                except:
-                    dprint("No bitfield message after handshake")
+                #TESTING
+                while True:
+                    try:
+                        response = clientSocket.recv(4096)
+                        #  Testing
+                        iprint("Response length:",len(response))
+                        if len(response) >= 5:
+                            message_id = unpack('>b', response[4:5])[0]
+                            dprint(message_id)
+                            dprint("RESPONSE TEST:", Message(message_id).name)
+                            dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
+                            dprint("PAYLOAD:", BitArray(response[5:]).bin)
+                            iprint("ADD inn check for complete bitfield given len of piece")
+                            iprint("IF have all bits make a test to download a torrent from one peer")
+                            ##
+                            iprint("Store peer info with pieces %,Amount,ip,+++ how and where to store this? ")
+                        
+                    except:
+                        dprint("TESTING----TESTING")
+                        break
                 
                 # TODO: remove this from class, should be separate 
                 try:
+                    # TODO: Reimplement this!
                     one_peer_connected_test = PeerMessage(clientSocket)
                     one_peer_connected_test.state_message(Message.interested)
                     #one_peer_connected_test.have_message(0)

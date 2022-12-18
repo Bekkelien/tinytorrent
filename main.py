@@ -10,19 +10,32 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 # Configuration settings
 config = Config().get_config()
 
+# ADD TO Configs
+BLOCK_SIZE = 20
+
 if __name__ == '__main__':
 
     PATH = Path('./src/files/')
-    files = ['kalilinux.torrent', 'ubuntu.torrent', 'altlinux.torrent', 'slackware.torrent']
+    files = ['single.torrent','slackware.torrent', 'kalilinux.torrent', 'ubuntu.torrent', 'altlinux.torrent']
 
     
     for file in files:
         file = TorrentFile(PATH / file)
         
         torrent, info_hash = file.read_torrent_file()
+        if 'announce-list' in torrent:
+            announce_list = set(torrent['announce-list'] + [torrent['announce']])
+        else:
+            announce_list = [torrent['announce']]
+        
+        pieces = int(len(torrent['info']['pieces'])/BLOCK_SIZE)
+        size = torrent['info']['piece_length'] * pieces
 
-        announce_list = set(torrent['announce-list'] + [torrent['announce']])
         iprint("Trackers:", announce_list)
+        iprint("Pieces:", pieces) # ALWAYS use ceil?
+        iprint("Accumulative file size:", size/1024/1024, "MB")
+
+        # TODO: Compute last piece size
 
         # NOTE: START LOGIC TEST 
         peers = 0
