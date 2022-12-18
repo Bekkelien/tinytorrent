@@ -17,7 +17,7 @@ config = Config().get_config()
 if __name__ == '__main__':
 
     PATH = Path('./src/files/')
-    files = ['single.torrent','slackware.torrent', 'kalilinux.torrent', 'ubuntu.torrent', 'altlinux.torrent']
+    files = ['single.torrent','slackware.torrent', 'kalilinux.torrent', 'ubuntu.torrent', 'altlinux.torrent', 'tails.torrent', 'wired-cd.torrent']
 
     
     for file in files:
@@ -26,18 +26,16 @@ if __name__ == '__main__':
         torrent, info_hash = file.read_torrent_file()
         announce_list = file.parse_torrent_file()
 
-        # TODO: Compute last piece size
+        # TODO: Compute last piece size, or check in logic?
 
         # NOTE: START LOGIC TEST 
-        client_address = test(torrent, info_hash, announce_list)
-
-
+        client_addresses = test(torrent, info_hash, announce_list)
         #NOTE: END LOGIC TEST 
 
-        #peer_wire = PeerWire(info_hash, torrent)
-        #for index, client_address in enumerate(client_addresses, start=1):
-        #    iprint("TEST CONNECTION:", index, color='blue')
-        #    peer_wire.handshake(client_address)
+        peer_wire = PeerWire(info_hash, torrent)
+        for index, client_address in enumerate(client_addresses, start=1):
+            iprint("TEST CONNECTION:", index, color='blue')
+            peer_wire.handshake(client_address)
 
             # TESTING
             #if index > 5:

@@ -20,6 +20,7 @@ pytest -s # To display the prints
 #### Top priority:
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
+- [ ] Verify bitfield message length and compute/log pieces of tracker n
 #### Needs to be implemented
 - [ ] Create a logo for tinytorrent
 - [ ] Create unique peer_id at start up of program
@@ -45,6 +46,10 @@ pytest -s # To display the prints
 - [ ] Manager to put logic inn and clean up logic as much as possible
 - [ ] Implement IPv6 for udp and http tracker
 
+#### Alternative fixes
+```Python  
+if b'files' in data[b'info']: # Can fail if filename is files, almost impossible bug
+```
 #### Fixed
 - [x] Fixed requests error handling 
 - [x] Implementation of announce-list not just announce
