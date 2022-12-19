@@ -47,7 +47,6 @@ def handle_recvfrom(clientSocket, buffer):
 
     except socket.timeout:
         wprint("Timeout recvfrom error occurred")
-        
     except socket.error as esock:
         wprint("Socket recvfrom error occurred:", esock)
 

@@ -15,6 +15,7 @@ config = Config().get_config()
 # ADD TO Configs
 
 if __name__ == '__main__':
+    iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
     files = ['ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']

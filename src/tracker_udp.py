@@ -1,10 +1,10 @@
 import random
+import socket 
 
 from enum import Enum
 from pathlib import Path
 from struct import pack, unpack
 from urllib.parse import urlparse
-from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 
 # Internal 
 from src.config import Config
@@ -38,15 +38,15 @@ class UdpTracker:
         self.metadata = metadata
 
         # BUG; Fails if we dont have a network connection
-        self.tracker_ip = gethostbyname(urlparse(self.hostname).hostname) 
+        self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
         self.tracker_port = urlparse(self.hostname).port
 
         # Network settings UDP
-        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+        self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.clientSocket.settimeout(config['udp']['timeout'])
     
     #@timer
-    def connect(self):
+    def connect(self) -> bool:
 
         # Send connection message
         transaction_id = random.getrandbits(32)
@@ -64,9 +64,10 @@ class UdpTracker:
             if Action.connect.value == response_action and transaction_id == response_transaction_id:
                 self.connection_id = response[2]
                 iprint("Connected to UDP tracker:", self.hostname) 
-                return
+                return True
             
-        wprint("Connection to UDP tracker failed:", self.hostname)      
+        wprint("Connection to UDP tracker failed:", self.hostname)  
+        return False    
 
     #@timer
     def announce(self, event):

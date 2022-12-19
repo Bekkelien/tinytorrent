@@ -20,11 +20,11 @@ pytest -s # To display the prints
 #### Top priority:
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
-- [ ] Verify bitfield message length and compute/log pieces of tracker n
-- [ ] import socket instead of from socket import socket
+- [x] Verify bitfield message length and compute/log pieces of tracker n
+- [x] import socket instead of from socket import socket
 #### Needs to be implemented
 - [ ] Create a logo for tinytorrent
-- [ ] Create unique peer_id at start up of program
+- [x] Create unique peer_id at start up of program
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
 - [ ] Implementation of tracking of how much data downloaded this session
 - [ ] Improve HTTP tracking/protocol 
@@ -34,7 +34,7 @@ pytest -s # To display the prints
 - [ ] Socket tracking is now a mess
 - [ ] Documentation of functions and classes
 - [ ] To many dependencies from a to b and c and over back into d ++
-- [ ] Create Tests- pytest
+- [ ] Create many tests? - pytest
 - [ ] Add type hints? 
 - [ ] Map peers and what state they are in 
 - [ ] Should peer id be one for en run if software or change each time?

@@ -1,8 +1,9 @@
 import json
+import socket
+
 from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass
-from socket import socket, SOCK_STREAM, AF_INET
 from bitstring import BitArray
 #from functools import lru_cache
 
@@ -108,7 +109,7 @@ class PeerWire():
                                             self.metadata['info_hash'], config['client']['peer_id'].encode())
 
         # Network setup TCP socket
-        clientSocket = socket(AF_INET, SOCK_STREAM)
+        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientSocket.settimeout(config['tcp']['timeout'])
 
         try:  
@@ -165,6 +166,7 @@ class PeerWire():
                                     if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare_bits']]):
                                         peer_status = 'seeder' # 100%
                                     else:
+                                        # NOTE: Does leachers 'never' send bitfield response after handshake
                                         peer_status = 'leecher' # Unknown ATM TODO:
                                     
                                     self.peers_connected.append([client_address[0],client_address[1],peer_status])

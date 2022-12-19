@@ -27,10 +27,10 @@ def test(metadata):
 
         if announce.startswith('udp'):
             udp_connection = UdpTracker(metadata, announce)
-            udp_connection.connect() 
-            client_addresses_temp = udp_connection.announce(EventUdp.none.value)
-            #udp_connection.scrape()
-        
+            if udp_connection.connect():
+                client_addresses_temp = udp_connection.announce(EventUdp.none.value)
+                #udp_connection.scrape()
+
         elif any(announce.startswith(x) for x in ['http', 'https']):
             trackers = HttpTracker(metadata, announce)
             if trackers.announce(EventHttp.started):
@@ -46,7 +46,6 @@ def test(metadata):
 
         if peers >= config['http']['peer_limit']:
             break
-
 
     if peers >= config['http']['peer_limit']:
         iprint("Peer amount:", peers, "accepted with minimum limit of:", config['http']['peer_limit'])
