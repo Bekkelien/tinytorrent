@@ -50,7 +50,7 @@ def wprint(*args, color = 'magenta'):
     print(colored(warning_msg, color))
 
 def tprint(metadata): 
-    """ Takes a dict from a torrent file and formate it for tinytorrent style prints"""
+    """ Takes a dict from a torrent file metadata and formate it for tinytorrent style prints"""
     for key, value in metadata.items():
         if 'files' in key:
             for file in metadata['files']:

@@ -55,6 +55,7 @@ class TorrentFile():
 
     
     def parse_torrent_file(self, block_size = 20):
+        """ Uses custom TinyTorrent convention """
         self.metadata = {}
 
         if 'announce-list' in self.data:

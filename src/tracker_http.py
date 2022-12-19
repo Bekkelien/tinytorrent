@@ -10,6 +10,7 @@ from src.networking import tracker_addresses_to_array, get_request
 # Configuration settings
 config = Config().get_config()
 
+
 @dataclass
 class EventHttp():
     started = 'started'
@@ -32,16 +33,16 @@ class HttpTracker:
     def announce(self, event, port=6881, compact=1):
 
         params = {  'info_hash': self.metadata['info_hash'],
-                    'peer_id': config['client']['peer_id'], # BUG: Cant be in config since should be unique 
-                    'uploaded': self.metadata['uploaded'],                    # TODO: GET actual number 
-                    'downloaded': self.metadata['downloaded'],                  # TODO: GET actual number 
+                    'peer_id': config['client']['peer_id'], 
+                    'uploaded': self.metadata['uploaded'],               
+                    'downloaded': self.metadata['downloaded'],              
                     'port': port, 
-                    'left': 1028128,                  # TODO: GET actual number 
+                    'left': self.metadata['left'],             
                     'compact': compact,
                     #'no_peer_id': 0,
                     'event': event,
                     #'numwant': 50,
-                    'key': 'asdsa24324'    # Important FOR SOME TRACKERS!! # NOTE: FIXED? What format an gen this on startup for client user n - ? 
+                    #'key': 'asdsa24324'    # Important FOR SOME TRACKERS!! # NOTE: FIXED? What format an gen this on startup for client user n - ? 
                  }                          # NOTE: unless fixed ? 2022-12-03 00:04:55.662889 [ERROR] Failed to get peers from tracker, reason: b'd14:failure reason87:Your client\'s "key" paramater and the key we have for you in our database do not match.e'
 
         self.announce_response = get_request(self.hostname, parse.urlencode(params), message="announce")

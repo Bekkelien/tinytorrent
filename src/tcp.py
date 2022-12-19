@@ -82,6 +82,9 @@ class PeerMessage():
 class PeerWire():
     def __init__(self, metadata):
         self.metadata = metadata
+        self.peers_connected = {}
+
+        self.peers_connected['name'] = metadata['name']
 
     def _extensions(self, reserved) -> None:
         if reserved[5]  == Extensions.exception_protocol:
@@ -157,14 +160,20 @@ class PeerWire():
                                 if len(BitArray(response[5:]).bin) == self.metadata['bitfield_length']:
                                     dprint("Bitfield OK")
                                     dprint("PAYLOAD:", BitArray(response[5:]).bin)
+                                    # Check if full bitfield (Store it? or only store partials?)
+                                    self.peers_connected['ip'] = client_address
+                                    from pprint import pprint
+                                    pprint(self.peers_connected)
+
+                                    # Make logic that drops invalid connections
                                     
                             iprint("ADD inn check for complete bitfield given len of piece")
                             iprint("IF have all bits make a test to download a torrent from one peer")
                             ##
                             iprint("Store peer info with pieces %,Amount,ip,+++ how and where to store this? ")
                         
-                    except:
-                        dprint("TESTING----TESTING")
+                    except Exception as e:
+                        eprint(e)
                         break
                 
                 # TODO: remove this from class, should be separate 
