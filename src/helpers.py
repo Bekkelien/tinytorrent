@@ -49,17 +49,11 @@ def wprint(*args, color = 'magenta'):
     #logging.warning(str(warning_msg))
     print(colored(warning_msg, color))
 
-def tprint(torrent_dict): 
+def tprint(metadata): 
     """ Takes a dict from a torrent file and formate it for tinytorrent style prints"""
-
-    print(f"{datetime.now()} [TORRENT] Name: {torrent_dict['info']['name']}")
-    print(f"{datetime.now()} [TORRENT] Trackers: {torrent_dict['announce-list']}")
-
-    if 'files' in torrent_dict['info']: 
-        for i in range(len(torrent_dict['info']['files'])):
-            print(f"{datetime.now()} [TORRENT] File {i}: {torrent_dict['info']['files'][i]}")
-
-    print(f"{datetime.now()} [TORRENT] Piece length: {torrent_dict['info']['piece_length']}")
-    print(f"{datetime.now()} [TORRENT] Piece size: {torrent_dict['info']['piece_length'] / 1024} KB") # ALWAYS use ceil?
-    print(f"{datetime.now()} [TORRENT] Pieces: {torrent_dict['pieces']}")
-    print(f"{datetime.now()} [TORRENT] Total size of files: {torrent_dict['size']/1024/1024} MB")
+    for key, value in metadata.items():
+        if 'files' in key:
+            for file in metadata['files']:
+                print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {file}")
+        else:
+            print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {value}")

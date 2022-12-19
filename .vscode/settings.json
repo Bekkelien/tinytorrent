@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
+        "bitfield",
         "dprint",
         "iprint",
         "tinytorrent",
+        "tprint",
         "wprint"
     ],
     "python.linting.enabled": false,

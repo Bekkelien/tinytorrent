@@ -14,10 +14,10 @@ config = Config().get_config()
 
 # Make this to a class
 
-def test(torrent, info_hash, announce_list):
+def test(metadata):
     peers = 0
     client_addresses, client_addresses_temp = [], []
-    for announce in announce_list:
+    for announce in metadata['announce-list']:
         iprint("Announce address:", announce)
 
         if 'ipv6' in announce:
@@ -26,13 +26,13 @@ def test(torrent, info_hash, announce_list):
             break
 
         if announce.startswith('udp'):
-            udp_connection = UdpTracker(torrent, info_hash, announce)
+            udp_connection = UdpTracker(metadata, announce)
             udp_connection.connect() 
             client_addresses_temp = udp_connection.announce(EventUdp.none.value)
             #udp_connection.scrape()
         
         elif any(announce.startswith(x) for x in ['http', 'https']):
-            trackers = HttpTracker(torrent, info_hash, announce)
+            trackers = HttpTracker(metadata, announce)
             if trackers.announce(EventHttp.started):
                 client_addresses_temp = trackers.tracker_response() 
                 #trackers.scrape() # Removed

@@ -32,11 +32,10 @@ class EventUdp(Enum):
 # BUG: Connection is never closed
 # NOTE: TODO: BUG:
 class UdpTracker:
-    def __init__(self, torrent, info_hash, announce): 
+    def __init__(self, metadata, announce): 
 
-        self.name = torrent['info']['name']
-        self.info_hash = info_hash
         self.hostname = announce
+        self.metadata = metadata
 
         # BUG; Fails if we dont have a network connection
         self.tracker_ip = gethostbyname(urlparse(self.hostname).hostname) 
@@ -74,11 +73,11 @@ class UdpTracker:
         message = pack('>QII20s20sQQQIIIih',self.connection_id,
                                             Action.announce.value,
                                             transaction_id,
-                                            self.info_hash, 
+                                            self.metadata['info_hash'], 
                                             config['client']['peer_id'].encode(),
-                                            0,                  # Downloaded bytes for this session
-                                            0,                  # Bytes left to downloaded 
-                                            0,                  # Uploaded in bytes for this session
+                                            self.metadata['downloaded'],                  # Downloaded bytes for this session
+                                            self.metadata['left'],                  # Bytes left to downloaded 
+                                            self.metadata['uploaded'],                  # Uploaded in bytes for this session
                                             event,  
                                             0,                  # Sender IP address - 0 = Default
                                             key,    
@@ -110,7 +109,7 @@ class UdpTracker:
     #@timer
     def scrape(self):
         transaction_id = random.getrandbits(32)
-        message = pack('>QII20s', self.connection_id, Action.scrape.value, transaction_id, self.info_hash)
+        message = pack('>QII20s', self.connection_id, Action.scrape.value, transaction_id, self.metadata['info_hash'])
         
         # Send scraping message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
@@ -123,7 +122,7 @@ class UdpTracker:
         # Validation
         if Action.scrape.value == response_action and transaction_id == response_transaction_id:
             completed, downloaded, incomplete = message[2], message[3], message[4]
-            iprint("Scraping completed, torrent:", self.name, "completed:", completed, "downloaded", downloaded, "incomplete" ,incomplete)
+            iprint("Scraping completed, torrent:", self.metadata['name'], "completed:", completed, "downloaded", downloaded, "incomplete" ,incomplete)
 
         else:
             wprint("Tracker scraping failure")

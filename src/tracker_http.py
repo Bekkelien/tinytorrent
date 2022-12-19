@@ -18,14 +18,12 @@ class EventHttp():
 
 # TODO: ADD INN SUPPORT FOR stats downloaded uploaded ++ (None or 0)
 class HttpTracker:
-    def __init__(self, torrent, info_hash, announce): 
-        self.info_hash = info_hash
+    def __init__(self, metadata, announce):
+        self.metadata = metadata
         self.complete = None
         self.incomplete = None
         self.interval = None
-        self.downloaded = None
         self.peers = b'' # TODO: RENAME
-        self.name = torrent['info']['name']
         self.hostname = announce
         self.announce_response = None
         
@@ -33,10 +31,10 @@ class HttpTracker:
 
     def announce(self, event, port=6881, compact=1):
 
-        params = {  'info_hash': self.info_hash,
+        params = {  'info_hash': self.metadata['info_hash'],
                     'peer_id': config['client']['peer_id'], # BUG: Cant be in config since should be unique 
-                    'uploaded': 0,                    # TODO: GET actual number 
-                    'downloaded': 0,                  # TODO: GET actual number 
+                    'uploaded': self.metadata['uploaded'],                    # TODO: GET actual number 
+                    'downloaded': self.metadata['downloaded'],                  # TODO: GET actual number 
                     'port': port, 
                     'left': 1028128,                  # TODO: GET actual number 
                     'compact': compact,
@@ -82,7 +80,7 @@ class HttpTracker:
             return 
         
         # TODO: No support for tracking multiple torrents from same tracker ATM
-        params= {'info_hash': self.info_hash}
+        params= {'info_hash': self.metadata['info_hash']}
 
         self.scrape_response = get_request(self.hostname + '?', parse.urlencode(params), message="scrape")
 

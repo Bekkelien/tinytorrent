@@ -17,22 +17,22 @@ config = Config().get_config()
 if __name__ == '__main__':
 
     PATH = Path('./src/files/')
-    files = ['single.torrent','slackware.torrent', 'kalilinux.torrent', 'ubuntu.torrent', 'altlinux.torrent', 'tails.torrent', 'wired-cd.torrent']
+    files = ['ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent', 'altlinux.torrent', 'tails.torrent', 'wired-cd.torrent']
 
     
     for file in files:
         # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
         file = TorrentFile(PATH / file)
-        torrent, info_hash = file.read_torrent_file()
-        announce_list = file.parse_torrent_file()
+        file.read_torrent_file()
+        metadata = file.parse_torrent_file()
 
         # TODO: Compute last piece size, or check in logic?
 
         # NOTE: START LOGIC TEST 
-        client_addresses = test(torrent, info_hash, announce_list)
+        client_addresses = test(metadata)
         #NOTE: END LOGIC TEST 
 
-        peer_wire = PeerWire(info_hash, torrent)
+        peer_wire = PeerWire(metadata)
         for index, client_address in enumerate(client_addresses, start=1):
             iprint("TEST CONNECTION:", index, color='blue')
             peer_wire.handshake(client_address)

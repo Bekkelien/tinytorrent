@@ -15,13 +15,14 @@ class TorrentFile():
 
     #@timer
     def read_torrent_file(self):
+        """ Uses the convention from: https://en.wikipedia.org/wiki/Torrent_file#cite_note-bep0003-1 """
 
         iprint("New torrent file:", self.file_path.name, color="green")
 
         with open(self.file_path, 'rb') as file:
             data = bdecode(file.read())
         
-        info_hash = hashlib.sha1(bencode(data[b'info'])).digest()
+        self.info_hash = hashlib.sha1(bencode(data[b'info'])).digest()
 
         if b'announce' in data:
             self.data['announce'] = data[b'announce'].decode()
@@ -33,6 +34,7 @@ class TorrentFile():
         piece_length = data[b'info'][b'piece length']
         pieces = data[b'info'][b'pieces']
 
+        # BUG (For instance single torrent has name files in it, although this is very unlikely in practice)
         if b'files' in data[b'info']: 
             paths = data[b'info'][b'files']
 
@@ -49,41 +51,54 @@ class TorrentFile():
             length = data[b'info'][b'length']
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
-        return self.data, info_hash
+        #return self.data, self.info_hash
 
     
-    def parse_torrent_file(self, _print=True, block_size = 20):
+    def parse_torrent_file(self, block_size = 20):
+        self.metadata = {}
 
         if 'announce-list' in self.data:
-            announce_list = set(self.data['announce-list'] + [self.data['announce']])
+            self.metadata['announce-list'] = set(self.data['announce-list'] + [self.data['announce']])
         else:
-            announce_list = set([self.data['announce']])
+            self.metadata['announce-list'] = set([self.data['announce']])
 
         pieces = int(len(self.data['info']['pieces'])/block_size)
         size = self.data['info']['piece_length'] * pieces
 
-        # ALL of this is temp stuff 
-        # TODO: Hax'y solution
-        if _print:
-            temp_dict = copy.deepcopy(self.data)
-            temp_dict['announce-list'] = announce_list
-            temp_dict['pieces'] = pieces
-            temp_dict['size'] = size         
+        self.metadata['pieces'] = pieces
+        self.metadata['size'] = size         
+        
+        # Kinda fixes the BUG in read torrent
+        if 'files' in self.data['info']: 
+            temp = []
+            for i in range(len(self.data['info']['files'])):
+                temp.append(self.data['info']['files'][i])
 
-            tprint(temp_dict)
-            # TESTING'
-            del temp_dict['info']['pieces']
-            # TESTING
-            
+            self.metadata['files'] = temp
+        else:                
+            self.metadata['files'] = [{'length': self.data['info']['length'], 'path': [self.data['info']['name']]}]
         bitfield_spare_bits = 8 * math.ceil(pieces/8) - pieces
-        bitfield_length = pieces + bitfield_spare_bits
-        iprint("TEMP bitfield_spare_bits:",bitfield_spare_bits)
-        iprint("TEMP bitfield_length:",bitfield_length)
-        print("Make a new dict with all info need for torrent n?")
 
-        temp_dict['bitfield_spare_bits'] = bitfield_spare_bits
-        temp_dict['bitfield_length'] = bitfield_length
-        print(temp_dict)
+        self.metadata['bitfield_spare_bits'] = bitfield_spare_bits
+        self.metadata['bitfield_length'] = pieces + bitfield_spare_bits
 
-        del temp_dict
-        return announce_list
+
+        self.metadata['downloaded'] = 0
+        self.metadata['uploaded'] = 0
+
+        # Kinda fixes the BUG in read torrent
+        if 'files' in self.data['info']:
+            left = 0
+            for file in self.metadata['files']:
+                left += file['length']
+            
+            self.metadata['left'] = left
+
+        else:
+            self.metadata['left'] = self.data['info']['length']
+
+        self.metadata['info_hash'] = self.info_hash
+        self.metadata['name'] = self.data['info']['name']
+
+        tprint(self.metadata)
+        return self.metadata

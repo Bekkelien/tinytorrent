@@ -80,9 +80,8 @@ class PeerMessage():
     # Merge else statements 
 
 class PeerWire():
-    def __init__(self, info_hash, torrent):
-        self.info_hash = info_hash
-        self.torrent = torrent
+    def __init__(self, metadata):
+        self.metadata = metadata
 
     def _extensions(self, reserved) -> None:
         if reserved[5]  == Extensions.exception_protocol:
@@ -105,7 +104,7 @@ class PeerWire():
         """
         # NOTE:
         message = pack('>1s19s8s20s20s',Handshake.pstrlen,Handshake.pstr,Handshake.reserved, \
-                                            self.info_hash, config['client']['peer_id'].encode())
+                                            self.metadata['info_hash'], config['client']['peer_id'].encode())
 
         # Network setup TCP socket
         clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -136,7 +135,7 @@ class PeerWire():
                                     ",reserve:", response_reserved.decode("utf-8", "ignore"), response_reserved, "response length:", response_length, "bytes")
             
             # Validate
-            if self.info_hash == response_info_hash:
+            if self.metadata['info_hash'] == response_info_hash:
                 response_peer_id = response[4]
                 iprint("Connected to peer with peer client ID:", response_peer_id)
                 self._extensions(response_reserved) # NOTE: No handling ATM
@@ -152,8 +151,13 @@ class PeerWire():
                             message_id = unpack('>b', response[4:5])[0]
                             dprint(message_id)
                             dprint("RESPONSE TEST:", Message(message_id).name)
-                            dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
-                            dprint("PAYLOAD:", BitArray(response[5:]).bin)
+                            # HAX Testing
+                            if Message(message_id).name == Message.bitfield.name:
+                                dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
+                                if len(BitArray(response[5:]).bin) == self.metadata['bitfield_length']:
+                                    dprint("Bitfield OK")
+                                    dprint("PAYLOAD:", BitArray(response[5:]).bin)
+                                    
                             iprint("ADD inn check for complete bitfield given len of piece")
                             iprint("IF have all bits make a test to download a torrent from one peer")
                             ##
