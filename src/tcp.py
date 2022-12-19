@@ -82,9 +82,7 @@ class PeerMessage():
 class PeerWire():
     def __init__(self, metadata):
         self.metadata = metadata
-        self.peers_connected = {}
-
-        self.peers_connected['name'] = metadata['name']
+        self.peers_connected = [] # NOTE: This is not really a good solution to store in a list, hard to remove invalid peers or update status
 
     def _extensions(self, reserved) -> None:
         if reserved[5]  == Extensions.exception_protocol:
@@ -144,7 +142,7 @@ class PeerWire():
                 self._extensions(response_reserved) # NOTE: No handling ATM
                 self._peer_client_software(response_peer_id)
 
-                #TESTING
+                #TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:
                 while True:
                     try:
                         response = clientSocket.recv(4096)
@@ -157,20 +155,24 @@ class PeerWire():
                             # HAX Testing
                             if Message(message_id).name == Message.bitfield.name:
                                 dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
+
                                 if len(BitArray(response[5:]).bin) == self.metadata['bitfield_length']:
                                     dprint("Bitfield OK")
-                                    dprint("PAYLOAD:", BitArray(response[5:]).bin)
+                                    #dprint("PAYLOAD:", BitArray(response[5:]).bin)
                                     # Check if full bitfield (Store it? or only store partials?)
-                                    self.peers_connected['ip'] = client_address
-                                    from pprint import pprint
-                                    pprint(self.peers_connected)
 
-                                    # Make logic that drops invalid connections
+                                    # Check if full bitfield (Seeder)
+                                    if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare_bits']]):
+                                        peer_status = 'seeder' # 100%
+                                    else:
+                                        peer_status = 'leecher' # Unknown ATM TODO:
                                     
-                            iprint("ADD inn check for complete bitfield given len of piece")
-                            iprint("IF have all bits make a test to download a torrent from one peer")
-                            ##
-                            iprint("Store peer info with pieces %,Amount,ip,+++ how and where to store this? ")
+                                    self.peers_connected.append([client_address[0],client_address[1],peer_status])
+                                    
+                                    dprint(self.peers_connected)
+
+                                    # # TODO: Make logic that drops invalid connections
+                            
                         
                     except Exception as e:
                         eprint(e)

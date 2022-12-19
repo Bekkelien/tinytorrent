@@ -17,7 +17,7 @@ config = Config().get_config()
 if __name__ == '__main__':
 
     PATH = Path('./src/files/')
-    files = ['ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent', 'altlinux.torrent', 'tails.torrent', 'wired-cd.torrent']
+    files = ['ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']
 
     
     for file in files:

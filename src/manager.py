@@ -37,7 +37,8 @@ def test(metadata):
                 client_addresses_temp = trackers.tracker_response() 
                 #trackers.scrape() # Removed
         else:
-            raise Exception("Unknown tracker protocol")
+            index = announce.rfind(':')
+            wprint("Unknown tracker protocol:", announce[:index])
 
         if client_addresses_temp:
             client_addresses = client_addresses + client_addresses_temp

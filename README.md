@@ -21,6 +21,7 @@ pytest -s # To display the prints
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
 - [ ] Verify bitfield message length and compute/log pieces of tracker n
+- [ ] import socket instead of from socket import socket
 #### Needs to be implemented
 - [ ] Create a logo for tinytorrent
 - [ ] Create unique peer_id at start up of program
@@ -45,6 +46,8 @@ pytest -s # To display the prints
 - [ ] Add multi port support for Http/s trackers # 6881-6889 Ports
 - [ ] Manager to put logic inn and clean up logic as much as possible
 - [ ] Implement IPv6 for udp and http tracker
+- [ ] Allow all peer_id that is reasonable as long as verification is okay
+- [ ] Will fail if all tracker protocols are'nt supported
 
 #### Alternative fixes
 ```Python  

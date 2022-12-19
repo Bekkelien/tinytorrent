@@ -9,7 +9,7 @@ from socket import socket ,inet_ntoa, gethostbyname, AF_INET, SOCK_DGRAM
 # Internal 
 from src.config import Config
 from src.read_file import TorrentFile
-from src.networking import tracker_addresses_to_array
+from src.networking import tracker_addresses_to_array, handle_recvfrom
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
@@ -53,18 +53,20 @@ class UdpTracker:
         message = pack('>QII', 0x41727101980, Action.connect.value , transaction_id)
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
 
-        # Response NOTE: Can fail
-        response = self.clientSocket.recvfrom(config['udp']['connection_buffer'])
-        response = unpack('>IIQ',response[0])
-        response_action, response_transaction_id = response[0], response[1]
-        
-        # Validation
-        if Action.connect.value == response_action and transaction_id == response_transaction_id:
-            self.connection_id = response[2]
-            iprint("Connected to UDP tracker:", self.hostname) 
+        response = handle_recvfrom(self.clientSocket, config['udp']['connection_buffer'])
+
+        if response:
+            # BUG: Can fail if response is bad
+            response = unpack('>IIQ',response[0])
+            response_action, response_transaction_id = response[0], response[1]
             
-        else:
-            wprint("Connection to UDP tracker failed:", self.hostname)      
+            # Validation
+            if Action.connect.value == response_action and transaction_id == response_transaction_id:
+                self.connection_id = response[2]
+                iprint("Connected to UDP tracker:", self.hostname) 
+                return
+            
+        wprint("Connection to UDP tracker failed:", self.hostname)      
 
     #@timer
     def announce(self, event):
@@ -87,11 +89,13 @@ class UdpTracker:
         # Send announce message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
         
-        # Response NOTE: Can fail
         # NOTE: Should we check client peer_id? no? since we do in handshake?
-        response = self.clientSocket.recvfrom(config['udp']['announce_buffer'])
-        message = unpack('>IIIII',response[0][0:20])
-        response_action, response_transaction_id = message[0], message[1]
+        response = handle_recvfrom(self.clientSocket, config['udp']['announce_buffer'])
+
+        if response:
+            # BUG: Can fail if response is bad
+            message = unpack('>IIIII',response[0][0:20])
+            response_action, response_transaction_id = message[0], message[1]
 
         # Validation
         if Action.announce.value == response_action and transaction_id == response_transaction_id:
@@ -102,9 +106,8 @@ class UdpTracker:
                 iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders, network='inn')
                 return client_addresses
 
-            # Handle this
-        else:
-            wprint("Announce response failure")
+        # Handle this
+        wprint("Announce response failure")
 
     #@timer
     def scrape(self):
@@ -114,18 +117,19 @@ class UdpTracker:
         # Send scraping message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
         
-        # Response NOTE: Can fail
-        response = self.clientSocket.recvfrom(config['udp']['scraping_buffer'])
-        message = unpack('>IIIII',response[0])
-        response_action, response_transaction_id = message[0], message[1]
-        
-        # Validation
-        if Action.scrape.value == response_action and transaction_id == response_transaction_id:
-            completed, downloaded, incomplete = message[2], message[3], message[4]
-            iprint("Scraping completed, torrent:", self.metadata['name'], "completed:", completed, "downloaded", downloaded, "incomplete" ,incomplete)
+        response = handle_recvfrom(self.clientSocket, config['udp']['scraping_buffer'])
 
-        else:
-            wprint("Tracker scraping failure")
+        if response:
+            # BUG: Can fail if response is bad
+            message = unpack('>IIIII',response[0])
+            response_action, response_transaction_id = message[0], message[1]
+            
+            # Validation
+            if Action.scrape.value == response_action and transaction_id == response_transaction_id:
+                completed, downloaded, incomplete = message[2], message[3], message[4]
+                iprint("Scraping completed, torrent:", self.metadata['name'], "completed:", completed, "downloaded", downloaded, "incomplete" ,incomplete)
+
+        wprint("Tracker scraping failure")
 
 
 if __name__ == '__main__':
