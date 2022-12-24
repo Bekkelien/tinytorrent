@@ -20,6 +20,12 @@ pytest -s # To display the prints
 #### Top priority:
 - [ ] tracker_udp -> Need cleaning up, testing and error handling
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
+- [ ] BUG:
+In PeerWire: while loop after handshake 
+
+if len(response) >=5:
+	infinite loop
+ 
 - [x] Verify bitfield message length and compute/log pieces of tracker n
 - [x] import socket instead of from socket import socket
 #### Needs to be implemented
@@ -48,6 +54,12 @@ pytest -s # To display the prints
 - [ ] Implement IPv6 for udp and http tracker
 - [ ] Allow all peer_id that is reasonable as long as verification is okay
 - [ ] Will fail if all tracker protocols are'nt supported
+- [ ] Qbittorrent times out every time? What are wrong here - after/during handshake Improve handshake? Try to pretend to be a known client not tiny torrent client
+- [ ] Invalid message should be warning not error msg
+- [ ] uTorrent Why no bitfield or “wrong” response length?
+- [ ] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
+- [ ] Are dups removed from peer list before try connect (Dups are removed but not I total count so fix that bug.)
+
 
 #### Alternative fixes
 ```Python  
@@ -68,6 +80,10 @@ if b'files' in data[b'info']: # Can fail if filename is files, almost impossible
 
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
+
+uTP extension ?
+x00\x03\x00\x00\x00\x00\x00\x00'
+
 ```python
     ↑♣ b'\x00\x00\x00\x00\x00\x18\x00\x05'
     ►♣ b'\x00\x00\x00\x00\x00\x10\x00\x05'
@@ -77,7 +93,8 @@ if b'files' in data[b'info']: # Can fail if filename is files, almost impossible
         '[ 0   1   2   3   4   5   6  7]'
 
     '\x10 -> 5 = BEP-10 Extension Protocol' 
-    '\x18 -> 5 = ?'
-    '\x05 -> 7 = '  
+    '\x18 -> 5 = Extension for Peers to Send Metadata File'
+    '\x01 -> 7 = BEP-5 Distributed Hash Table'
+    '\x05 -> 7 = Holepunch Extension'  
     '\x04 -> 7 = BEP-6 Fast Extension '
 ```
