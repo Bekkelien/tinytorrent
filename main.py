@@ -3,10 +3,8 @@ from pathlib import Path
 # Internals
 from src.config import Config
 from src.read_file import TorrentFile
-from src.tracker_udp import UdpTracker, EventUdp
-from src.tracker_http import TrackerConnectionHttp, EventHttp
-from src.tcp import PeerWire
 from src.manager import test
+from src.tcp import PeerWire
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
@@ -33,10 +31,10 @@ if __name__ == '__main__':
         client_addresses = test(metadata)
         #NOTE: END LOGIC TEST 
 
-        #peer_wire = PeerWire(metadata)
-        #for index, client_address in enumerate(client_addresses, start=1):
-        #    iprint("TEST CONNECTION:", index, color='blue')
-        #    peer_wire.handshake(client_address)
+        peer_wire = PeerWire(metadata)
+        for index, client_address in enumerate(client_addresses, start=1):
+            iprint("TEST CONNECTION:", index, color='blue')
+            peer_wire.handshake(client_address)
 
             # TESTING
             #if index > 5:

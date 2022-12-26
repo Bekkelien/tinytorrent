@@ -174,7 +174,9 @@ class PeerWire():
                                     dprint(self.peers_connected)
 
                                     # # TODO: Make logic that drops invalid connections
-                            
+
+                        else:
+                            wprint("HAX ERROR HANDLING")   
                         
                     except Exception as e:
                         eprint(e)

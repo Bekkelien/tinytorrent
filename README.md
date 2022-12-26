@@ -18,22 +18,12 @@ pytest -s # To display the prints
 
 ## TIP's'
 #### Top priority:
-- [ ] tracker_udp -> Need cleaning up, testing and error handling
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
-- [ ] BUG:
-In PeerWire: while loop after handshake 
 
-if len(response) >=5:
-	infinite loop
- 
-- [x] Verify bitfield message length and compute/log pieces of tracker n
-- [x] import socket instead of from socket import socket
 #### Needs to be implemented
 - [ ] Create a logo for tinytorrent
-- [x] Create unique peer_id at start up of program
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
 - [ ] Implementation of tracking of how much data downloaded this session
-- [ ] Improve HTTP tracking/protocol 
 - [ ] Should we verify unknown trackers response ATM and download for it, try to download from known clients in testing period
 - [ ] Handle pice length for a torrent file 
 - [ ] Rename sending messages name currently: message 
@@ -58,7 +48,6 @@ if len(response) >=5:
 - [ ] Invalid message should be warning not error msg
 - [ ] uTorrent Why no bitfield or “wrong” response length?
 - [ ] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
-- [ ] Are dups removed from peer list before try connect (Dups are removed but not I total count so fix that bug.)
 
 
 #### Alternative fixes
@@ -67,7 +56,9 @@ if b'files' in data[b'info']: # Can fail if filename is files, almost impossible
 ```
 #### Fixed
 - [x] Fixed requests error handling 
+- [x] Improve HTTP tracking/protocol 
 - [x] Implementation of announce-list not just announce
+- [x] Are dups removed from peer list before try connect (Dups are removed but not I total count so fix that bug.)
 - [x] In read_file -> 'path': [str(paths[index][b'path'])[3:-2]]}) # Improve implementation
 - [x] # Client IP's and Port's, use map/lambda function to speed up for loop? -> FAST enough ATM, max 74 clients to looping os ok - 
 - [x] Add check of peer id (id from connected client) in udp tracker to make sure it has expected id
@@ -77,7 +68,16 @@ if b'files' in data[b'info']: # Can fail if filename is files, almost impossible
 - [x] fix import stuff when running tests, but main in main?
 - [x] Handle the announce-list in trackers and logic [TCP] - append all url's from list and logic for getting more peer if below threshold (15 for instance in config) then try next announce url from announce list
 - [x] Make a function for parsing IP addresses and ports
+- [x] tracker_udp -> Need cleaning up, testing and error handling
+- [x] BUG:
+In PeerWire: while loop after handshake 
 
+if len(response) >=5:
+	infinite loop
+ 
+- [x] Verify bitfield message length and compute/log pieces of tracker n
+- [x] import socket instead of from socket import socket
+- [x] Create unique peer_id at start up of program
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 

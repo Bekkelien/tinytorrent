@@ -2,7 +2,6 @@ import random
 import socket 
 
 from enum import Enum
-from pathlib import Path
 from struct import pack, unpack
 from urllib.parse import urlparse
 

@@ -2,14 +2,12 @@ import requests
 import socket
 from struct import unpack
 
-
 # Internals 
 from src.config import Config
 from src.helpers import iprint, eprint, wprint
 
 # Configuration settings
 config = Config().get_config()
-
 
 # Make only for http requests? may be to generic else
 def get_request(url, params, message='None'):

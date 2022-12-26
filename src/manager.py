@@ -1,11 +1,7 @@
-import socket
 # Internals
 from src.config import Config
-from src.read_file import TorrentFile
 from src.tracker_udp import UdpTracker, EventUdp
 from src.tracker_http import TrackerConnectionHttp, EventHttp
-from src.tcp import PeerWire
-from pathlib import Path
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
 from src.config import Config
@@ -46,7 +42,9 @@ def test(metadata):
 
         if client_addresses_temp:
             client_addresses = client_addresses + client_addresses_temp
+            client_addresses = [list(x) for x in set(tuple(x) for x in client_addresses)] # Remove duplicates
             peers += len(client_addresses)
+
 
         if peers >= config['http']['peer_limit']:
             break
@@ -59,4 +57,5 @@ def test(metadata):
     else:
         iprint("Low amount of peers, found only:", peers, "peers")
     
+    print(client_addresses)
     return client_addresses
