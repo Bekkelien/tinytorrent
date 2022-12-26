@@ -1,8 +1,9 @@
+import socket
 # Internals
 from src.config import Config
 from src.read_file import TorrentFile
 from src.tracker_udp import UdpTracker, EventUdp
-from src.tracker_http import HttpTracker, EventHttp
+from src.tracker_http import TrackerConnectionHttp, EventHttp
 from src.tcp import PeerWire
 from pathlib import Path
 from src.helpers import iprint, eprint, wprint, dprint, timer
@@ -18,24 +19,25 @@ def test(metadata):
     peers = 0
     client_addresses, client_addresses_temp = [], []
     for announce in metadata['announce-list']:
-        iprint("Announce address:", announce)
+        iprint("Announce address:", announce)#, "ip:", socket.getaddrinfo(announce))
 
-        if 'ipv6' in announce:
-            # TODO move into tracker protocol 
-            wprint("IPv6 is not currently supported") 
-            break
+        #if 'ipv6' in announce:
+        #    # TODO move into tracker protocol 
+        #    wprint("IPv6 is not currently supported") 
+        #    break
 
         if announce.startswith('udp'):
-            udp_connection = UdpTracker(metadata, announce)
-            if udp_connection.connect():
-                client_addresses_temp = udp_connection.announce(EventUdp.none.value)
-                #udp_connection.scrape()
+            dprint("disabled for testing") #NOTE::
+            #udp_connection = UdpTracker(metadata, announce)
+            #if udp_connection.connect():
+            #    client_addresses_temp = udp_connection.announce(EventUdp.none.value)
+            #    #udp_connection.scrape()
 
         elif any(announce.startswith(x) for x in ['http', 'https']):
-            trackers = HttpTracker(metadata, announce)
-            if trackers.announce(EventHttp.started):
-                client_addresses_temp = trackers.tracker_response() 
-                #trackers.scrape() # Removed
+            tracker = TrackerConnectionHttp(metadata, announce)
+            client_addresses_temp = tracker.announce(EventHttp.started)
+            # tracker.scrape()
+
         else:
             index = announce.rfind(':')
             wprint("Unknown tracker protocol:", announce[:index])

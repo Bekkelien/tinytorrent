@@ -15,7 +15,6 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 # Configuration settings
 config = Config().get_config()
 
-# msg
 class Action(Enum):
     connect = 0
     announce = 1
@@ -71,21 +70,20 @@ class UdpTracker:
 
     #@timer
     def announce(self, event):
-        key = random.getrandbits(32)
         transaction_id = random.getrandbits(32)
         message = pack('>QII20s20sQQQIIIih',self.connection_id,
                                             Action.announce.value,
                                             transaction_id,
                                             self.metadata['info_hash'], 
                                             config['client']['peer_id'].encode(),
-                                            self.metadata['downloaded'],                  # Downloaded bytes for this session
-                                            self.metadata['left'],                  # Bytes left to downloaded 
-                                            self.metadata['uploaded'],                  # Uploaded in bytes for this session
+                                            self.metadata['downloaded'],                
+                                            self.metadata['left'],               
+                                            self.metadata['uploaded'],             
                                             event,  
-                                            0,                  # Sender IP address - 0 = Default
-                                            key,    
-                                            -1,                 # n clients, -1 [Spec says 74 is max but i get more than this] 
-                                            self.tracker_port)  # 98 Bytes
+                                            0,                          # Sender IP address - 0 = Default
+                                            random.getrandbits(32),    
+                                            -1,                         # n clients, -1 [Spec says 74 is max but i get more than this] 
+                                            self.tracker_port)          # 98 Total Bytes
 
         # Send announce message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 

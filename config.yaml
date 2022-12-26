@@ -7,6 +7,9 @@ udp:
   scraping_buffer: 32 # In reality [20] but 32 to match hardware and network reality
 
 http:
+  port: 6881
+  compact: 1
+  numwant: 100
   timeout: 2 # Reduce when bug is fixed
   peer_limit: 5 # Limit of peers to keep looking in announce-list
 
@@ -18,3 +21,4 @@ tcp:
 
 client: 
   peer_id: '-TI2080-' # Prefix for TinyTorrent's peer_id. Upon startup this will be given a random suffix as: '-TI2080-12345689123'
+  key: 'TINY:'

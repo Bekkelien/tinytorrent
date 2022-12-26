@@ -51,6 +51,7 @@ class TorrentFile():
             length = data[b'info'][b'length']
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
+        #tprint(self.data)
         #return self.data, self.info_hash
 
     

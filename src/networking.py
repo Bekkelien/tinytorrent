@@ -57,6 +57,8 @@ def handle_recvfrom(clientSocket, buffer):
 def tracker_addresses_to_array(payload_addresses, split=6):
     """ hex -> 2D list of addresses """
     # TODO: Add support for IPv6 addresses
+
+    #print(payload_addresses)
     
     response_length = len(payload_addresses)
 
@@ -81,5 +83,34 @@ def tracker_addresses_to_array(payload_addresses, split=6):
     iprint("Tracker responded with:", len(client_addresses), "peers with valid ip/port combination of total:", peers ,"peers")
     return client_addresses
 
+
+"""
+
+import ipaddress
+
+def is_valid_ipv6(ip_str):
+
+  try:
+
+    ip = ipaddress.IPv6Address(ip_str)
+
+    return True
+
+  except ValueError:
+
+    return False
+
+>>> is_valid_ipv6('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
+True
+>>> is_valid_ipv6('2001:db8:85a3:0:0:8a2e:370:7334')
+True
+>>> is_valid_ipv6('2001:db8:85a3::8a2e:370:7334')
+True
+>>> is_valid_ipv6('2001:0db8:85a3:0000:0000:8a2e:0370:7334:1234')
+False
+>>> is_valid_ipv6('192.168.0.1')
+False
+
+"""
 #if __name__ == '__main__':
 #   tracker_addresses_to_array(payload_addresses)

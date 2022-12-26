@@ -16,6 +16,7 @@ class Config():
     def get_config(self) -> dict:
         """ Used to get config for TinyTorrent and add unique peer_id for one run of TinyTorrent"""
         self.config['client']['peer_id'] = self.config['client']['peer_id'] +  ''.join(random.choices(string.digits + string.ascii_letters, k=12))
+        self.config['client']['key'] = self.config['client']['key'] +  ''.join(random.choices(string.digits + string.ascii_letters, k=6))
         return self.config
 
 # NOTE: TESTING
