@@ -27,16 +27,18 @@ def test(metadata):
         #    break
 
         if announce.startswith('udp'):
-            dprint("disabled for testing") #NOTE::
-            #udp_connection = UdpTracker(metadata, announce)
-            #if udp_connection.connect():
-            #    client_addresses_temp = udp_connection.announce(EventUdp.none.value)
-            #    #udp_connection.scrape()
+            #dprint("disabled for testing") #NOTE::
+            tracker = UdpTracker(metadata, announce)
+            if tracker.connect():
+                client_addresses_temp = tracker.announce(EventUdp.started.value) # NOTE:: EVENT not yet "supported"
+                #udp_connection.scrape()
+                tracker.close()
 
         elif any(announce.startswith(x) for x in ['http', 'https']):
             tracker = TrackerConnectionHttp(metadata, announce)
-            client_addresses_temp = tracker.announce(EventHttp.started)
+            client_addresses_temp = tracker.announce(EventHttp.started) # NOTE:: EVENT not yet "supported"
             # tracker.scrape()
+            
 
         else:
             index = announce.rfind(':')

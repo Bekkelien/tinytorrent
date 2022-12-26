@@ -27,18 +27,22 @@ class EventUdp(Enum):
     started = 2
     stopped = 3
 
-# NOTE: TODO: BUG:
-# BUG: Connection is never closed
-# NOTE: TODO: BUG:
 class UdpTracker:
     def __init__(self, metadata, announce): 
 
         self.hostname = announce
         self.metadata = metadata
+        self.client_addresses = b''
 
-        # BUG; Fails if we dont have a network connection
-        self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
-        self.tracker_port = urlparse(self.hostname).port
+        try:
+            self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
+            self.tracker_port = urlparse(self.hostname).port
+        
+        # TODO: Terminate if we lost connection to network, improve solution 
+        except Exception as sockerr:
+            eprint("UDP Tracker network error:",sockerr)
+            eprint("Terminating TinyTorrent")
+            raise SystemExit
 
         # Network settings UDP
         self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -54,8 +58,8 @@ class UdpTracker:
 
         response = handle_recvfrom(self.clientSocket, config['udp']['connection_buffer'])
 
-        if response:
-            # BUG: Can fail if response is bad
+        # NOTE: create a better error message?
+        if response and len(response[0]) == 16 and response[1] == (self.tracker_ip, self.tracker_port):
             response = unpack('>IIQ',response[0])
             response_action, response_transaction_id = response[0], response[1]
             
@@ -88,25 +92,25 @@ class UdpTracker:
         # Send announce message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
         
-        # NOTE: Should we check client peer_id? no? since we do in handshake?
         response = handle_recvfrom(self.clientSocket, config['udp']['announce_buffer'])
 
-        if response:
-            # BUG: Can fail if response is bad
+        # 20 |---->>> according to chat.gpt 
+        if response and len(response[0]) >= 20 and response[1] == (self.tracker_ip, self.tracker_port):
             message = unpack('>IIIII',response[0][0:20])
             response_action, response_transaction_id = message[0], message[1]
 
-        # Validation
-        if Action.announce.value == response_action and transaction_id == response_transaction_id:
-            interval, leechers, seeders = message[2], message[3], message[4]
-           
-            client_addresses = tracker_addresses_to_array(response[0][20:]) #TODO: response better naming?
-            if client_addresses:  
-                iprint("Announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders, network='inn')
-                return client_addresses
+            # Validation
+            if Action.announce.value == response_action and transaction_id == response_transaction_id:
+                interval, leechers, seeders = message[2], message[3], message[4]
+            
+                self.client_addresses = tracker_addresses_to_array(response[0][20:])
 
-        # Handle this
-        wprint("Announce response failure")
+                if self.client_addresses:  
+                    iprint("UDP Tracker announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
+                    return self.client_addresses
+
+        wprint("UDP Tracker announce response failure")
+        return self.client_addresses
 
     #@timer
     def scrape(self):
@@ -118,8 +122,7 @@ class UdpTracker:
         
         response = handle_recvfrom(self.clientSocket, config['udp']['scraping_buffer'])
 
-        if response:
-            # BUG: Can fail if response is bad
+        if response and len(response[0]) == 16 and response[1] == (self.tracker_ip, self.tracker_port):
             message = unpack('>IIIII',response[0])
             response_action, response_transaction_id = message[0], message[1]
             
@@ -130,28 +133,6 @@ class UdpTracker:
 
         wprint("Tracker scraping failure")
 
-
-if __name__ == '__main__':
-    """ TESTING TESTING TESTING TESTING TESTING TESTING TESTING TESTING """
-
-    PATH = Path('./src/files/')
-    files = ['tails.torrent','ChiaSetup-1.6.1.exe.torrent','big-buck-bunny.torrent','tears-of-steel.torrent']
-
-    for file in files:
-        file = TorrentFile(PATH / file)
-
-        torrent, info_hash = file.read_torrent_file()
-
-        # TODO: Fix this for list as well 
-        try:
-            if 'udp' in torrent['announce']:
-                udp_connection = UdpTracker(torrent, info_hash)
-                udp_connection.connect() 
-                client_addresses = udp_connection.announce(EventUdp.none.value) 
-                udp_connection.scrape()
-                #dprint("Client Addresses:", client_addresses[0:5])
-
-        except Exception as e:
-            eprint("TEMP HAX HANDLER:", e)
-
-            
+    # NOTE: Dangerous since we need to call the close function
+    def close(self):
+        self.clientSocket.close()

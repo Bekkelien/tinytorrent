@@ -11,7 +11,7 @@ http:
   compact: 1
   numwant: 100
   timeout: 2 # Reduce when bug is fixed
-  peer_limit: 5 # Limit of peers to keep looking in announce-list
+  peer_limit: 5000 # Limit of peers to keep looking in announce-list
 
 tcp:
   timeout: 2 # Reduce when bug is fixed
