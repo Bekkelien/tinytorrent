@@ -32,7 +32,8 @@ class Message(Enum):
 class Handshake: 
     pstrlen = b'\x13'                
     pstr =  b'BitTorrent protocol' 
-    reserved = b'\x00' * 8
+    reserved = b'\x00\x00\x00\x00\x00\x00\x00\x00'
+    #reserved = b'\x00\x00\x00\x00\x00\x10\x00\x00'
 
 @dataclass
 class Extensions:

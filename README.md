@@ -21,6 +21,7 @@ pytest -s # To display the prints
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
 
 #### Needs to be implemented
+- [ ] When return data from function refactor to always return same datatype for instance not False, None when list is expected.
 - [ ] Create a logo for tinytorrent
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
 - [ ] Implementation of tracking of how much data downloaded this session

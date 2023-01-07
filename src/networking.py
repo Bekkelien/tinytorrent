@@ -54,23 +54,25 @@ def handle_recvfrom(clientSocket, buffer):
 # @timer Fast enough 
 def tracker_addresses_to_array(payload_addresses, split=6):
     """ hex -> 2D list of addresses """
-    # TODO: Add support for IPv6 addresses
-
-    #print(payload_addresses)
     
+    # TODO: Add support for IPv6 addresses
+    client_addresses = []
+
+    if not payload_addresses:
+        return client_addresses
+
     response_length = len(payload_addresses)
 
     if response_length < split:
         wprint("No peers available, or failed to get addresses")
-        return False
+        return client_addresses # Empty list
 
     if response_length % split != 0:
         wprint("Tracker responded with unsupported length of:", response_length,"needs to be in 6 bytes increments")
-        return False
+        return client_addresses # Empty list
 
     peers = int(response_length/split)
 
-    client_addresses = []
     for index in range(0,response_length,split):
         ip = socket.inet_ntoa(payload_addresses[index:index+4])            # IP   4 Bytes # NOTE: will fail if ip is not valid?
         port = unpack("!H", payload_addresses[index+4:index+6])[0]  # Port 2 Bytes

@@ -16,8 +16,8 @@ if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
-    files = ['ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']
-
+    #files = ['ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']
+    files = ["gimp.torrent"]
     
     for file in files:
         # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
@@ -29,12 +29,12 @@ if __name__ == '__main__':
 
         # NOTE: START LOGIC TEST 
         client_addresses = test(metadata)
-        #NOTE: END LOGIC TEST 
-
-        peer_wire = PeerWire(metadata)
-        for index, client_address in enumerate(client_addresses, start=1):
-            iprint("TEST CONNECTION:", index, color='blue')
-            peer_wire.handshake(client_address)
+        ##NOTE: END LOGIC TEST 
+#
+        #peer_wire = PeerWire(metadata)
+        #for index, client_address in enumerate(client_addresses, start=1):
+        #    iprint("TEST CONNECTION:", index, color='blue')
+        #    peer_wire.handshake(client_address)
 
             # TESTING
             #if index > 5:

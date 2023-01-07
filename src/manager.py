@@ -57,5 +57,5 @@ def test(metadata):
     else:
         iprint("Low amount of peers, found only:", peers, "peers")
     
-    print(client_addresses)
+    #print(client_addresses)
     return client_addresses
