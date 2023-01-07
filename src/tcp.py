@@ -86,11 +86,11 @@ class PeerWire():
         self.metadata = metadata
         self.peers_connected = [] # NOTE: This is not really a good solution to store in a list, hard to remove invalid peers or update status
 
-    def _extensions(self, reserved) -> None:
+    def _extensions(self, reserved):
         if reserved[5]  == Extensions.exception_protocol:
-            iprint("Peer support extension protocol: BEP 10")
+            iprint("Peer support extension protocol: BEP 10 - Extension Protocol for Peers to Send Arbitrary Data")
 
-    def _peer_client_software(self, peer_id) -> None:
+    def _peer_client_software(self, peer_id):
         client_id = peer_id[1:3].decode("utf-8", "ignore") 
 
         if Clients.clients.get(client_id) == None:

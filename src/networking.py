@@ -16,11 +16,11 @@ def get_request(url, params, message='None'):
         response = requests.get(url, params=params, timeout=config['http']['timeout'])
         if response.status_code != 200:
             wprint("Request:", message, "failed with status code:", response.status_code)
-            return False
+            return []
 
         if 'failure' in str(response.content): # TODO: warning message handling of these as well
             wprint("Response:", message, "failure, reason:", response.content)
-            return False    
+            return []    
 
         return response.content
 
@@ -33,22 +33,23 @@ def get_request(url, params, message='None'):
     except requests.exceptions.RequestException as err:
         eprint ("Request critical error:", err)
     
-    return False
+    return []
 
 # TODO: Rename
 def handle_recvfrom(clientSocket, buffer):
-    response = [] 
 
     try:
         # Attempt to receive data from the socket
         response = clientSocket.recvfrom(buffer)
+        return response
 
     except socket.timeout:
         wprint("Timeout recvfrom error occurred")
     except socket.error as esock:
         wprint("Socket recvfrom error occurred:", esock)
 
-    return response
+    return []
+    
 
 # TODO: rename function  to something good (Make more generic?)
 # @timer Fast enough 
@@ -56,23 +57,22 @@ def tracker_addresses_to_array(payload_addresses, split=6):
     """ hex -> 2D list of addresses """
 
     # TODO: Add support for IPv6 addresses
-    client_addresses = []
-
-    if not payload_addresses:
-        return client_addresses
+    
+    if not payload_addresses: return []
 
     response_length = len(payload_addresses)
 
     if response_length < split:
         wprint("No peers available, or failed to get addresses")
-        return client_addresses # Empty list
+        return [] 
 
     if response_length % split != 0:
         wprint("Tracker responded with unsupported length of:", response_length,"needs to be in 6 bytes increments")
-        return client_addresses # Empty list
+        return [] 
 
     peers = int(response_length/split)
 
+    client_addresses = []
     for index in range(0,response_length,split):
         ip = socket.inet_ntoa(payload_addresses[index:index+4])            # IP   4 Bytes # NOTE: will fail if ip is not valid?
         port = unpack("!H", payload_addresses[index+4:index+6])[0]  # Port 2 Bytes

@@ -44,18 +44,16 @@ class TrackerManager():
 
             if announce.startswith('udp'):
                 client_addresses = self._tracker_udp(announce)
-                dprint("THIS",client_addresses)
             
             elif any(announce.startswith(x) for x in ['http', 'https']):
                 client_addresses = self._tracker_http(announce)
-                dprint("THIS",client_addresses)
             
             else:
-                wprint("Unknown tracker protocol:", announce[:announce.rfind(':')])
+                wprint("Unknown tracker protocol", announce[:announce.rfind(':')], "for tracker:", announce) # Typical wss or so
                 client_addresses = []
 
             if client_addresses:
-                client_addresses = self.client_addresses + client_addresses
+                self.client_addresses = self.client_addresses + client_addresses
                 self.client_addresses = [list(x) for x in set(tuple(x) for x in self.client_addresses)] # Remove duplicates
                 self.peers += len(self.client_addresses)
             

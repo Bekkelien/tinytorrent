@@ -21,7 +21,6 @@ pytest -s # To display the prints
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
 
 #### Needs to be implemented
-- [ ] When return data from function refactor to always return same datatype for instance not False, None when list is expected.
 - [ ] Create a logo for tinytorrent
 - [ ] In read_file -> if b'files' in self.data[b'info']: # BUG if single name filename is files
 - [ ] Implementation of tracking of how much data downloaded this session
@@ -49,6 +48,7 @@ pytest -s # To display the prints
 - [ ] Invalid message should be warning not error msg
 - [ ] uTorrent Why no bitfield or “wrong” response length?
 - [ ] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
+- [ ] When return data from function refactor to always return same datatype for instance not False, None when list is expected.
 
 
 #### Alternative fixes
@@ -93,8 +93,8 @@ x00\x03\x00\x00\x00\x00\x00\x00'
     ►  b'\x00\x00\x00\x00\x00\x10\x00\x00'
         '[ 0   1   2   3   4   5   6  7]'
 
-    '\x10 -> 5 = BEP-10 Extension Protocol' 
-    '\x18 -> 5 = Extension for Peers to Send Metadata File'
+    '\x10 -> 5 = BEP-10 Extension Protocol for Peers to Send Arbitrary Data' 
+    '\x18 -> 5 = eXEMPT - Extension for Peers to Send Metadata File'
     '\x01 -> 7 = BEP-5 Distributed Hash Table'
     '\x05 -> 7 = Holepunch Extension'  
     '\x04 -> 7 = BEP-6 Fast Extension '
