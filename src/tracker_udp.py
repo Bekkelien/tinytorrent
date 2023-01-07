@@ -31,7 +31,7 @@ class UdpTracker:
 
         self.hostname = announce
         self.metadata = metadata
-        self.client_addresses = b''
+        self.client_addresses = []
 
         try:
             self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
@@ -107,6 +107,8 @@ class UdpTracker:
                 if self.client_addresses:  
                     iprint("UDP Tracker announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
                     return self.client_addresses
+                
+                else: self.client_addresses = [] 
 
         wprint("UDP Tracker announce response failure")
         return self.client_addresses

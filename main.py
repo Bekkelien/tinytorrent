@@ -3,7 +3,7 @@ from pathlib import Path
 # Internals
 from src.config import Config
 from src.read_file import TorrentFile
-from src.manager import test
+from src.manager import test, TrackerManager
 from src.tcp import PeerWire
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
@@ -16,8 +16,8 @@ if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
-    #files = ['ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']
-    files = ["gimp.torrent"]
+    files = ['ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']
+    #files = ["gimp.torrent"]
     
     for file in files:
         # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
@@ -28,8 +28,11 @@ if __name__ == '__main__':
         # TODO: Compute last piece size, or check in logic?
 
         # NOTE: START LOGIC TEST 
-        client_addresses = test(metadata)
+        #client_addresses = test(metadata)
         ##NOTE: END LOGIC TEST 
+
+        tracker = TrackerManager(metadata)
+        client_address = tracker.get_clients()
 #
         #peer_wire = PeerWire(metadata)
         #for index, client_address in enumerate(client_addresses, start=1):

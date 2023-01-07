@@ -167,7 +167,7 @@ class PeerWire():
                                     if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare_bits']]):
                                         peer_status = 'seeder' # 100%
                                     else:
-                                        # NOTE: Does leachers 'never' send bitfield response after handshake
+                                        # NOTE: Does leachers 'never' send bitfield response after handshake ?
                                         peer_status = 'leecher' # Unknown ATM TODO:
                                     
                                     self.peers_connected.append([client_address[0],client_address[1],peer_status])

@@ -9,53 +9,56 @@ from src.config import Config
 # Configuration settings
 config = Config().get_config()
 
-# Make this to a class
+class TrackerManager():
+    def __init__(self, metadata):
+        self.metadata = metadata
+        self.client_addresses = []
+        self.peers = 0
 
-def test(metadata):
-    peers = 0
-    client_addresses, client_addresses_temp = [], []
-    for announce in metadata['announce-list']:
-        iprint("Announce address:", announce)#, "ip:", socket.getaddrinfo(announce))
-
-        #if 'ipv6' in announce:
-        #    # TODO move into tracker protocol 
-        #    wprint("IPv6 is not currently supported") 
-        #    break
-
-        if announce.startswith('udp'):
-            #dprint("disabled for testing") #NOTE::
-            tracker = UdpTracker(metadata, announce)
-            if tracker.connect():
-                client_addresses_temp = tracker.announce(EventUdp.started.value) # NOTE:: EVENT not yet "supported"
-                #udp_connection.scrape()
-                tracker.close()
-
-        elif any(announce.startswith(x) for x in ['http', 'https']):
-            tracker = TrackerConnectionHttp(metadata, announce)
-            client_addresses_temp = tracker.announce(EventHttp.started) # NOTE:: EVENT not yet "supported"
-            # tracker.scrape()
+    def _tracker_http(self, announce, scrape=False):
+            tracker = TrackerConnectionHttp(self.metadata, announce)
+            client_addresses = tracker.announce(EventHttp.started) # NOTE:: EVENT not yet "supported"
+            if scrape:
+                tracker.scrape()
             
+            return client_addresses
 
-        else:
-            index = announce.rfind(':')
-            wprint("Unknown tracker protocol:", announce[:index])
+    def _tracker_udp(self, announce, scrape=False):
+        client_addresses = [] # BUGFIX a bit nasty, but returns None if not connected to udp tracker
+        tracker = UdpTracker(self.metadata, announce)
+        if tracker.connect():
+            client_addresses = tracker.announce(EventUdp.started.value) # NOTE:: EVENT not yet "supported"
+            if scrape:
+                tracker.scrape()
+            tracker.close()
+        
+        return client_addresses
 
-        if client_addresses_temp:
-            client_addresses = client_addresses + client_addresses_temp
-            client_addresses = [list(x) for x in set(tuple(x) for x in client_addresses)] # Remove duplicates
-            peers += len(client_addresses)
+    def get_clients(self):
+        # New version fetches all clients from the peers, NOTE: Reduce client amount should not be here because this is fast!
+        for announce in self.metadata['announce-list']:
 
+            if 'ipv6' in announce:
+                wprint("IPv6 is currently not supported") 
+                client_addresses = []
 
-        if peers >= config['http']['peer_limit']:
-            break
+            if announce.startswith('udp'):
+                client_addresses = self._tracker_udp(announce)
+                dprint("THIS",client_addresses)
+            
+            elif any(announce.startswith(x) for x in ['http', 'https']):
+                client_addresses = self._tracker_http(announce)
+                dprint("THIS",client_addresses)
+            
+            else:
+                wprint("Unknown tracker protocol:", announce[:announce.rfind(':')])
+                client_addresses = []
 
-    if peers >= config['http']['peer_limit']:
-        iprint("Peer amount:", peers, "accepted with minimum limit of:", config['http']['peer_limit'])
+            if client_addresses:
+                client_addresses = self.client_addresses + client_addresses
+                self.client_addresses = [list(x) for x in set(tuple(x) for x in self.client_addresses)] # Remove duplicates
+                self.peers += len(self.client_addresses)
+            
+        iprint("Get clients resulted in:", self.peers, "Peers/Client addresses")
 
-    elif peers == 0:
-        wprint("No peers found")
-    else:
-        iprint("Low amount of peers, found only:", peers, "peers")
-    
-    #print(client_addresses)
-    return client_addresses
+        return self.client_addresses

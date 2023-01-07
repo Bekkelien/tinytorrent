@@ -37,7 +37,7 @@ def get_request(url, params, message='None'):
 
 # TODO: Rename
 def handle_recvfrom(clientSocket, buffer):
-    response = None 
+    response = [] 
 
     try:
         # Attempt to receive data from the socket
@@ -54,7 +54,7 @@ def handle_recvfrom(clientSocket, buffer):
 # @timer Fast enough 
 def tracker_addresses_to_array(payload_addresses, split=6):
     """ hex -> 2D list of addresses """
-    
+
     # TODO: Add support for IPv6 addresses
     client_addresses = []
 
@@ -78,7 +78,7 @@ def tracker_addresses_to_array(payload_addresses, split=6):
         port = unpack("!H", payload_addresses[index+4:index+6])[0]  # Port 2 Bytes
         if port > 1024 and port <= 65535:
             client_addresses.append([ip,port])
-    
+
     # NOTE: Typically tracker respond with this clients address as well to peers-1 is ok or even expected when announce or scrape after first time 
     iprint("Tracker responded with:", len(client_addresses), "peers with valid ip/port combination of total:", peers ,"peers")
     return client_addresses

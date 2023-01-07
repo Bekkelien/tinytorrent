@@ -26,7 +26,7 @@ class TrackerConnectionHttp:
         self.peers = b'' # TODO: RENAME
         self.hostname = announce
         self.announce_response = None
-        self.client_addresses = b''
+        self.client_addresses = []
 
     def announce(self, event):
 
