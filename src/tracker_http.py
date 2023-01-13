@@ -5,7 +5,7 @@ from dataclasses import dataclass
 # Internals 
 from src.config import Config
 from src.helpers import iprint, eprint, wprint, dprint
-from src.networking import tracker_addresses_to_array, get_request
+from src.networking import parse_tracker_peers_ip, http_tracker_requests, http_tracker_response_verify
 
 # Configuration settings
 config = Config().get_config()
@@ -23,10 +23,8 @@ class TrackerConnectionHttp:
         self.complete = None
         self.incomplete = None
         self.interval = None
-        self.peers = b'' # TODO: RENAME
+        self.peers = b'' 
         self.hostname = announce
-        self.announce_response = None
-        self.client_addresses = []
 
     def announce(self, event):
 
@@ -43,44 +41,34 @@ class TrackerConnectionHttp:
                     'key': config['client']['key']  
                  }
 
-        self.announce_response = get_request(self.hostname, parse.urlencode(params), message="announce")
 
-        if self.announce_response:
-            if b'failure' in self.announce_response:
-                wprint("Tracker HTTP announce response failed with reason:", self.announce_response) 
-                return self.client_addresses
+        response = http_tracker_requests(self.hostname, parse.urlencode(params), message="announce")
+        response = http_tracker_response_verify(response)
 
-            elif b'warning' in self.announce_response:
-                wprint("Tracker HTTP announce response warning:", self.announce_response)  
-                return self.client_addresses
-
-            iprint("Tracker HTTP announce response accepted") 
-            self.client_addresses = TrackerConnectionHttp._tracker_response(self)
-
-            if self.client_addresses:
-                iprint("Tracker responded HTTP/HTTPS, complete:", self.complete, "incomplete:", self.incomplete, \
-                                                        "interval:", self.interval, "peers:",len(self.client_addresses))
-                return self.client_addresses
+        if response:
+            return TrackerConnectionHttp._http_parse_response(self, response)
         
-        wprint("Tracker HTTP announce failed")
-        return self.client_addresses
+        else:
+            wprint("Tracker HTTP announce, could not find any peers from tracker:", self.hostname)
+            return []
         
-    def _tracker_response(self):
+    def _http_parse_response(self, response):
         """ Parse tracker response if tracker responds to the announce request"""
 
-        temp = bdecode(self.announce_response)
+        temp = bdecode(response)
+
+        # Parse the tracker OrderedDict response
         self.complete = temp[b'complete'] if b'complete' in temp else wprint("Tracker did not send complete response")
         self.incomplete = temp[b'incomplete'] if b'incomplete' in temp else wprint("Tracker did not send incomplete response")
         self.interval = temp[b'interval'] if b'interval' in temp else wprint("Tracker did not send interval response")
         self.peers = temp[b'peers'] if b'peers' in temp else wprint("Tracker did not send peers response")
         
-        # Convert to ip and ports
-        client_addresses = tracker_addresses_to_array(self.peers)
+        peer_ip_addresses = parse_tracker_peers_ip(self.peers)
+        iprint("HTTP Announce OK, complete:", self.complete, "incomplete:", self.incomplete, "interval:", self.interval, "peers:", len(peer_ip_addresses))
 
-        return client_addresses
-        
-
-    # NOTE: Does really not do "anything"
+        return peer_ip_addresses
+    
+    # NOTE: This function is not implemented fully yet
     def scrape(self): 
 
         iprint("Tracker HTTP scraping")
@@ -94,7 +82,7 @@ class TrackerConnectionHttp:
         # NOTE: Single tracker supports only
         params= {'info_hash': self.metadata['info_hash']}
 
-        self.scrape_response = get_request(self.hostname + '?', parse.urlencode(params), message="scrape")
+        self.scrape_response = http_tracker_requests(self.hostname + '?', parse.urlencode(params), message="scrape")
 
         # TODO: Parse response
         if self.scrape_response:

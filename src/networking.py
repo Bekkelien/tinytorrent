@@ -10,50 +10,53 @@ from src.helpers import iprint, eprint, wprint
 config = Config().get_config()
 
 # Make only for http requests? may be to generic else
-def get_request(url, params, message='None'):
-    """ Returns content from a get request"""
+def http_tracker_requests(url, params, message='None') -> list:
+    """ Returns content from a get request """
     try:
         response = requests.get(url, params=params, timeout=config['http']['timeout'])
-        if response.status_code != 200:
-            wprint("Request:", message, "failed with status code:", response.status_code)
-            return []
+        if response.status_code == 200:
+            return response.content
 
-        if 'failure' in str(response.content): # TODO: warning message handling of these as well
-            wprint("Response:", message, "failure, reason:", response.content)
+        else:
+            wprint("Request:", message, "failed with status code:", response.status_code)
             return []    
 
-        return response.content
-
-    except requests.exceptions.HTTPError as errh:
-        eprint ("Request Http Error:", errh)
-    except requests.exceptions.ConnectionError as errc:
-        eprint ("Request Connection Error:", errc)
-    except requests.exceptions.Timeout as errt:
-        eprint ("Request Timeout Error:", errt)
-    except requests.exceptions.RequestException as err:
-        eprint ("Request critical error:", err)
+    except requests.exceptions.HTTPError as errh: eprint("Request Http Error:", errh)
+    except requests.exceptions.ConnectionError as errc: eprint("Request Connection Error:", errc)
+    except requests.exceptions.Timeout as errt: eprint("Request Timeout Error:", errt)
+    except requests.exceptions.RequestException as err: eprint("Request critical error:", err)
     
     return []
 
-# TODO: Rename
-def handle_recvfrom(clientSocket, buffer):
+def http_tracker_response_verify(response) -> list:
+    """ Takes a inn a tracker announce response and verifies that the tracker response is correct """
+    if response:
+        if b'failure' in response:
+            wprint("Tracker HTTP announce response failed with reason:", response) 
+            return []
 
+        elif b'warning' in response:
+            wprint("Tracker HTTP announce response warning:", response)  
+            return []
+    
+    return response
+    
+def udp_tracker_response(clientSocket, buffer) -> list:
+    """ Response handler for UDP tracker responses """
     try:
         # Attempt to receive data from the socket
         response = clientSocket.recvfrom(buffer)
         return response
 
-    except socket.timeout:
-        wprint("Timeout recvfrom error occurred")
-    except socket.error as esock:
-        wprint("Socket recvfrom error occurred:", esock)
+    except socket.timeout: wprint("UDP tracker timeout -> No response received")
+    except socket.error as esock: eprint("Socket error occurred in UDP tracker response:", esock)
 
     return []
-    
+
 
 # TODO: rename function  to something good (Make more generic?)
 # @timer Fast enough 
-def tracker_addresses_to_array(payload_addresses, split=6):
+def parse_tracker_peers_ip(payload_addresses, split=6):
     """ hex -> 2D list of addresses """
 
     # TODO: Add support for IPv6 addresses

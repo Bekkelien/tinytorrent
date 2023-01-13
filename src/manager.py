@@ -42,7 +42,7 @@ class TrackerManager():
                 wprint("IPv6 is currently not supported") 
                 client_addresses = []
 
-            if announce.startswith('udp'):
+            elif announce.startswith('udp'):
                 client_addresses = self._tracker_udp(announce)
             
             elif any(announce.startswith(x) for x in ['http', 'https']):

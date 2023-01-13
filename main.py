@@ -11,14 +11,14 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 config = Config().get_config()
 
 # TEST PARAMS 
-TEST = True # Only test first torrent in files list
-INDEX = 10 # Try to get data from 5 peers 
+TEST = False # Only test first torrent in files list
+INDEX = 50 # Try to get data from n peers 
 
 if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
-    files = ['gimp.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent','kalilinux.torrent', 'altlinux.torrent','tails.torrent', 'wired-cd.torrent']
+    files = ['tails.torrent', 'gimp.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
     
 
     for file in files:

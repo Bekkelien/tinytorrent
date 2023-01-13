@@ -50,7 +50,7 @@ class TorrentFile():
             length = data[b'info'][b'length']
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
-        #tprint(self.data)
+        #print(self.data)
         #return self.data, self.info_hash
 
     
@@ -66,6 +66,7 @@ class TorrentFile():
         pieces = int(len(self.data['info']['pieces'])/block_size)
         size = self.data['info']['piece_length'] * pieces
 
+        self.metadata['piece_length'] = self.data['info']['piece_length']
         self.metadata['pieces'] = pieces
         self.metadata['size'] = size         
         

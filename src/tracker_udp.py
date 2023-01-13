@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 # Internal 
 from src.config import Config
 from src.read_file import TorrentFile
-from src.networking import tracker_addresses_to_array, handle_recvfrom
+from src.networking import parse_tracker_peers_ip, udp_tracker_response
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
@@ -55,7 +55,7 @@ class UdpTracker:
         message = pack('>QII', 0x41727101980, Action.connect.value , transaction_id)
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
 
-        response = handle_recvfrom(self.clientSocket, config['udp']['connection_buffer'])
+        response = udp_tracker_response(self.clientSocket, config['udp']['connection_buffer'])
 
         # NOTE: create a better error message?
         if response and len(response[0]) == 16 and response[1] == (self.tracker_ip, self.tracker_port):
@@ -91,7 +91,7 @@ class UdpTracker:
         # Send announce message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
         
-        response = handle_recvfrom(self.clientSocket, config['udp']['announce_buffer'])
+        response = udp_tracker_response(self.clientSocket, config['udp']['announce_buffer'])
 
         # 20 |---->>> according to chat.gpt 
         if response and len(response[0]) >= 20 and response[1] == (self.tracker_ip, self.tracker_port):
@@ -102,7 +102,7 @@ class UdpTracker:
             if Action.announce.value == response_action and transaction_id == response_transaction_id:
                 interval, leechers, seeders = message[2], message[3], message[4]
             
-                self.client_addresses = tracker_addresses_to_array(response[0][20:])
+                self.client_addresses = parse_tracker_peers_ip(response[0][20:])
 
                 if self.client_addresses:  
                     iprint("UDP Tracker announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
@@ -121,7 +121,7 @@ class UdpTracker:
         # Send scraping message
         self.clientSocket.sendto(message, (self.tracker_ip, self.tracker_port)) 
         
-        response = handle_recvfrom(self.clientSocket, config['udp']['scraping_buffer'])
+        response = udp_tracker_response(self.clientSocket, config['udp']['scraping_buffer'])
 
         if response and len(response[0]) == 16 and response[1] == (self.tracker_ip, self.tracker_port):
             message = unpack('>IIIII',response[0])

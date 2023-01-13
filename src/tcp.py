@@ -1,6 +1,6 @@
 import json
 import socket
-
+import math
 from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass
@@ -165,7 +165,7 @@ class PeerWire():
 
                                     # Check if full bitfield (Seeder)
                                     if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare_bits']]):
-                                        peer_status = 'seeder' # 100%
+                                        peer_status = 'seeder' # 100%¨
                                     else:
                                         # NOTE: Does leachers 'never' send bitfield response after handshake ?
                                         peer_status = 'leecher' # Unknown ATM TODO:
@@ -173,7 +173,7 @@ class PeerWire():
                                     self.peers_connected.append([client_address[0],client_address[1],peer_status])
                                     
                                     dprint(self.peers_connected)
-
+                                        
                                     # # TODO: Make logic that drops invalid connections
 
                         else:
@@ -183,16 +183,33 @@ class PeerWire():
                         eprint(e)
                         break
                 
-                # TODO: remove this from class, should be separate 
-                try:
-                    # TODO: Reimplement this!
-                    one_peer_connected_test = PeerMessage(clientSocket)
-                    one_peer_connected_test.state_message(Message.interested)
-                    #one_peer_connected_test.have_message(0)
-                    #one_peer_connected_test.have_message(1)
- 
-                except:
-                    print("THIS IS A BAD IDEA")
+                    # TODO: remove this from class, should be separate 
+                    try:
+                        # TODO: Reimplement this!
+                        one_peer_connected_test = PeerMessage(clientSocket)
+                        one_peer_connected_test.state_message(Message.interested)
+                        #one_peer_connected_test.have_message(0)
+                        #one_peer_connected_test.have_message(1)
+
+                        # Just testing more nesting :)
+                        print(self.metadata['pieces'])
+
+                        #for piece in range(self.metadata['pieces']):
+                        #    dprint("Trying to download piece:", piece)
+                        #    for block in range(math.ceil(self.metadata['piece_length'] / 16384)): # Make sure this is a integer
+                        #        dprint("Downloading block:", block, "from piece:", piece)
+                        #        hax = pack('>IBIII', 13, 6, piece, 0 + (block*16384), 16384)
+                        #        clientSocket.send(hax)
+                        #
+                        #        response = clientSocket.recv(24576) 
+                        #        print(len(response))
+                        #        print(response)
+                        #        break
+                        #    break
+                        
+                    except:
+                        print("THIS IS A BAD IDEA")
+
 
                 return True # BUG: We are assuming that that the peer is unchoked here but that is optimistic 
 
