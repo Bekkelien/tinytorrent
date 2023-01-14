@@ -85,6 +85,8 @@ class PeerWire():
     def __init__(self, metadata):
         self.metadata = metadata
         self.peers_connected = [] # NOTE: This is not really a good solution to store in a list, hard to remove invalid peers or update status
+        self.piece_hax = [] # TODO: HAX TEMP
+        self.torrent_data = b''
 
     def _extensions(self, reserved):
         if reserved[5]  == Extensions.exception_protocol:
@@ -99,12 +101,18 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
 
     @timer
-    def handshake(self, client_address) -> bool: 
+    def handshake(self, client_address, haxhax) -> bool: 
         """ 
         'BitTorrent protocol' 1.0
         <len(pstr)><pstr><reserved><info_hash><peer_id> 
         
         """
+
+        # HAX: client_address NOTE: new all adresses for testing
+
+        client_address = client_address[haxhax]
+
+
         # NOTE:
         message = pack('>1s19s8s20s20s',Handshake.pstrlen,Handshake.pstr,Handshake.reserved, \
                                             self.metadata['info_hash'], config['client']['peer_id'].encode())
@@ -197,23 +205,33 @@ class PeerWire():
                         import time
                         import hashlib
 
-                        torrent_data = b''
+                        
                         for piece in range(self.metadata['pieces']):
+                            piece = 2703
+                            if piece in self.piece_hax:
+                                continue
                             dprint("Trying to download piece:", piece)
 
+                            # TODO: Handle last piece
                             block_data = b''
-                            for block in range(math.ceil(self.metadata['piece_length'] / 2**14)): # Make sure this is a integer
+                            hax48 = math.ceil(self.metadata['piece_length'] / 2**14) # Make sure this is a integer
+                            if piece == self.metadata['pieces'] - 1: # Due to zero base index
+                                pass # TODO: Handle last piece 
+
+                            for block in range(hax48): 
                                 dprint("Downloading piece:", piece, "block:", block)
                                 hax = pack('>IBIII', 13, 6, piece, block*(2**14), (2**14))
                                 #print(unpack('>IBIII',hax))
                                 clientSocket.send(hax)
-                                time.sleep(0.2) # how to do this better, time to get all of the message from peer
-                                # This will depend on the peer, how can I know when all data have been received from the peer and if the 
-                                response = clientSocket.recv(24576) 
+                                ## Solve this problem TODO:
+                                time.sleep(0.3)
+                                #time.sleep(1)
+                                response = clientSocket.recv(24576)
+                                #response = clientSocket.recv(24576, socket.MSG_WAITALL) 
                                 # TODO: Verify the response
                                 try:
                                     msg = unpack('>IBII',response[0:13])
-                                    #print(msg)
+                                    print(msg)
                                     #print(msg[0])
                                     #print(len(response[13:]))
                                     block_data = block_data + response[13:] 
@@ -228,13 +246,25 @@ class PeerWire():
 
                             if hash == self.metadata['pieces_hash'][(piece*20):20 +(piece*20)]:
                                 iprint("Piece:", piece, "downloaded success" , color="green")
-                                torrent_data = torrent_data + block_data
-                                iprint("currently downloaded:", len(torrent_data), "bytes")
-                                # Save to file system
+                                self.torrent_data = self.torrent_data + block_data
+                                iprint("currently downloaded:", len(self.torrent_data), "bytes")
+                                self.piece_hax.append(piece)
+
+                                # Save to file system one file - NOTE: not TESTED because last piece is not downloaded correctly yet.
+                                if piece == self.metadata['pieces']-1: # Due to zero base index
+                                    iprint("File downloaded successfully")
+                                    # NOTE: only if torrent is a single file
+                                    if len(self.metadata['files']['path']) == 1:
+                                        with open(self.metadata['files']['path'][0], 'wb') as f:
+                                            f.write(self.torrent_data)
+                                    else:
+                                        eprint("Cant save multifile torrent")
+                                # Handle last piece, for the pi torrent this is not needed for current testing
                             
                             else: 
                                 iprint("Piece:", piece, "downloaded failed" , color="red")
-                                raise NotImplementedError("To be implemented or last piece to be downloaded not implemented")
+                                #raise NotImplementedError("To be implemented or last piece to be downloaded not implemented")
+                                self.handshake(self, client_address)                            
                             #break
 
                                 

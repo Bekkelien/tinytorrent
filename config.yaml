@@ -8,15 +8,15 @@ udp:
 
 http:
   port: 6881
-  compact: 1
-  numwant: 1000
-  timeout: 2 # Reduce when bug is fixed
+  compact: 2
+  numwant: 1000 # There is supposedly a "limit" in the protocol but seems to be lower in theory then in practice
+  timeout: 1 # Reduce when bug is fixed
   #peer_limit: 50000 # Limit of peers to keep looking in announce-list
 
 # MOVE-FULL handshake in config?
 
 tcp:
-  timeout: 2 # Reduce when bug is fixed
+  timeout: 1 # Reduce when bug is fixed
   handshake_buffer: 4096 # Unknown max size
   state_message_buffer: 16 # Max size should be 5 
   message_buffer: 4096 # NOTE: LARGE? Need to look into how large this can be! - remember one bit for each piece?

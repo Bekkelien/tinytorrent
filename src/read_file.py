@@ -68,7 +68,7 @@ class TorrentFile():
 
         self.metadata['piece_length'] = self.data['info']['piece_length']
         self.metadata['pieces'] = pieces
-        self.metadata['size'] = size         
+        self.metadata['size'] = size # BUG! Wrong size this (remember last piece is smaller)         
         
         # Kinda fixes the BUG in read torrent
         if 'files' in self.data['info']: 

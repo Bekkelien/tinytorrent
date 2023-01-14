@@ -1,6 +1,5 @@
 ## Tinytorrent, the goal is to make this a tiny 'automatic' torrent client 
 
-
 ### Create a torrent
 ```console
 Place files in a folder within the ./create_torrent/files folder then run:
