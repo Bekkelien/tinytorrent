@@ -51,9 +51,9 @@ class TorrentFile():
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
 
         #print(self.data)
-        #return self.data, self.info_hash
+        #return self.data #, self.info_hash
 
-    
+    # TODO: Merge to just one tinytorrent specific parsing algorithm
     def parse_torrent_file(self, block_size = 20):
         """ Uses custom TinyTorrent convention """
         self.metadata = {}
@@ -103,4 +103,7 @@ class TorrentFile():
         self.metadata['name'] = self.data['info']['name']
 
         tprint(self.metadata)
+
+        self.metadata['pieces_hash'] = self.data['info']['pieces']
+
         return self.metadata

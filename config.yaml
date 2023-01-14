@@ -9,7 +9,7 @@ udp:
 http:
   port: 6881
   compact: 1
-  numwant: 100
+  numwant: 1000
   timeout: 2 # Reduce when bug is fixed
   #peer_limit: 50000 # Limit of peers to keep looking in announce-list
 

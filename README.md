@@ -16,6 +16,11 @@ pytest
 pytest -s # To display the prints
 ```
 
+#### "Verified" working clients (Handshake-Bitfield-unchoke):
+```console
+qBittorrent
+```
+```console
 ## TIP's'
 #### Top priority:
 - [ ] Handle TCP connection timeout make a generic function for connections? to avoud TimeoutError: timed out and other socket errors 
@@ -49,12 +54,14 @@ pytest -s # To display the prints
 - [ ] uTorrent Why no bitfield or “wrong” response length?
 - [ ] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
 - [ ] When return data from function refactor to always return same datatype for instance not False, None when list is expected.
-
+```
 
 #### Alternative fixes
 ```Python  
 if b'files' in data[b'info']: # Can fail if filename is files, almost impossible bug
 ```
+
+```console
 #### Fixed
 - [x] Fixed requests error handling 
 - [x] Improve HTTP tracking/protocol 
@@ -79,6 +86,8 @@ if len(response) >=5:
 - [x] Verify bitfield message length and compute/log pieces of tracker n
 - [x] import socket instead of from socket import socket
 - [x] Create unique peer_id at start up of program
+
+```
 
 ### Reserve response from current hand sake testing (Client's extension protocol's ?)
 

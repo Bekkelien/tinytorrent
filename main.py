@@ -18,18 +18,16 @@ if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
-    files = ['tails.torrent', 'gimp.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    
+    files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
+    files = ['pi.torrent']
 
     for file in files:
         # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
 
         ### Get Metadata from torrent file ###
         file = TorrentFile(PATH / file)
-        file.read_torrent_file()
+        file.read_torrent_file() # TODO: fix temp all the way through
         metadata = file.parse_torrent_file()
-
-        # TODO: Compute last piece size, or check in logic?
 
         ### Get peers IP addresses ###
         tracker = TrackerManager(metadata)
@@ -40,6 +38,7 @@ if __name__ == '__main__':
         peer_wire = PeerWire(metadata)
         for index, client_address in enumerate(client_addresses, start=1):
             iprint("TEST CONNECTION:", index, color='blue')
+            #TODO:
             peer_wire.handshake(client_address)
 
             if index >= INDEX:

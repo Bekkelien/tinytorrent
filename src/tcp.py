@@ -193,22 +193,55 @@ class PeerWire():
 
                         # Just testing more nesting :)
                         print(self.metadata['pieces'])
+                        # NOTE: this testing
+                        import time
+                        import hashlib
 
-                        #for piece in range(self.metadata['pieces']):
-                        #    dprint("Trying to download piece:", piece)
-                        #    for block in range(math.ceil(self.metadata['piece_length'] / 16384)): # Make sure this is a integer
-                        #        dprint("Downloading block:", block, "from piece:", piece)
-                        #        hax = pack('>IBIII', 13, 6, piece, 0 + (block*16384), 16384)
-                        #        clientSocket.send(hax)
-                        #
-                        #        response = clientSocket.recv(24576) 
-                        #        print(len(response))
-                        #        print(response)
-                        #        break
-                        #    break
+                        torrent_data = b''
+                        for piece in range(self.metadata['pieces']):
+                            dprint("Trying to download piece:", piece)
+
+                            block_data = b''
+                            for block in range(math.ceil(self.metadata['piece_length'] / 2**14)): # Make sure this is a integer
+                                dprint("Downloading piece:", piece, "block:", block)
+                                hax = pack('>IBIII', 13, 6, piece, block*(2**14), (2**14))
+                                #print(unpack('>IBIII',hax))
+                                clientSocket.send(hax)
+                                time.sleep(0.2) # how to do this better, time to get all of the message from peer
+                                # This will depend on the peer, how can I know when all data have been received from the peer and if the 
+                                response = clientSocket.recv(24576) 
+                                # TODO: Verify the response
+                                try:
+                                    msg = unpack('>IBII',response[0:13])
+                                    #print(msg)
+                                    #print(msg[0])
+                                    #print(len(response[13:]))
+                                    block_data = block_data + response[13:] 
+                                    #print(response[17:])
+                                except Exception as e:
+                                    eprint("Error downloading piece TESTING:", e)
+                                
+                            #dprint("Pice length for data rev",len(block_data))
+                            hash = hashlib.sha1(block_data).digest()
+                            #dprint("Hash of piece:", piece, "are:", hash)
+                            #dprint("Hash of piece in metadata:", temp_sha_test['info']['pieces'][(piece*20):20 +(piece*20)])
+
+                            if hash == self.metadata['pieces_hash'][(piece*20):20 +(piece*20)]:
+                                iprint("Piece:", piece, "downloaded success" , color="green")
+                                torrent_data = torrent_data + block_data
+                                iprint("currently downloaded:", len(torrent_data), "bytes")
+                                # Save to file system
+                            
+                            else: 
+                                iprint("Piece:", piece, "downloaded failed" , color="red")
+                                raise NotImplementedError("To be implemented or last piece to be downloaded not implemented")
+                            #break
+
+                                
+                            #break
                         
-                    except:
-                        print("THIS IS A BAD IDEA")
+                    except Exception as e:
+                        print("THIS IS A BAD IDEA", e)
 
 
                 return True # BUG: We are assuming that that the peer is unchoked here but that is optimistic 
