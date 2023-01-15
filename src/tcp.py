@@ -207,7 +207,7 @@ class PeerWire():
 
                         
                         for piece in range(self.metadata['pieces']):
-                            piece = 2703
+                            # piece = 2703 NOTE: For testing last piece
                             if piece in self.piece_hax:
                                 continue
                             dprint("Trying to download piece:", piece)
@@ -215,23 +215,29 @@ class PeerWire():
                             # TODO: Handle last piece
                             block_data = b''
                             hax48 = math.ceil(self.metadata['piece_length'] / 2**14) # Make sure this is a integer
-                            if piece == self.metadata['pieces'] - 1: # Due to zero base index
-                                pass # TODO: Handle last piece 
+                            #if piece == self.metadata['pieces'] - 1: # Due to zero base index
+                            #    pass Last piece stuff
 
                             for block in range(hax48): 
                                 dprint("Downloading piece:", piece, "block:", block)
-                                hax = pack('>IBIII', 13, 6, piece, block*(2**14), (2**14))
-                                #print(unpack('>IBIII',hax))
-                                clientSocket.send(hax)
+                                if piece == 2703 and hax48 == block + 1:
+                                    dprint("Last piece HAX for pi torrent")
+                                    hax = pack('>IBIII', 13, 6, piece, block*block_size, 1828) # last piece size = (354404132%131072)%2**14 -> 1828
+                                    clientSocket.send(hax)
+                                else:
+                                    block_size = 2**14
+                                    hax = pack('>IBIII', 13, 6, piece, block*block_size, block_size)
+                                    #print(unpack('>IBIII',hax))
+                                    clientSocket.send(hax)
                                 ## Solve this problem TODO:
-                                time.sleep(0.3)
+                                time.sleep(0.5)
                                 #time.sleep(1)
                                 response = clientSocket.recv(24576)
                                 #response = clientSocket.recv(24576, socket.MSG_WAITALL) 
                                 # TODO: Verify the response
                                 try:
                                     msg = unpack('>IBII',response[0:13])
-                                    print(msg)
+                                    #print(msg)
                                     #print(msg[0])
                                     #print(len(response[13:]))
                                     block_data = block_data + response[13:] 
@@ -254,9 +260,13 @@ class PeerWire():
                                 if piece == self.metadata['pieces']-1: # Due to zero base index
                                     iprint("File downloaded successfully")
                                     # NOTE: only if torrent is a single file
-                                    if len(self.metadata['files']['path']) == 1:
-                                        with open(self.metadata['files']['path'][0], 'wb') as f:
+                                    if len(self.metadata['files'][0]['path']) == 1: 
+                                        # BUG: How to really save this correctly -> Corrupted now
+                                        dprint("Saving to file:", self.metadata['files'][0]['path'][0])
+                                        with open(self.metadata['files'][0]['path'][0], 'wb') as f:
                                             f.write(self.torrent_data)
+                                        
+                                        raise SystemExit
                                     else:
                                         eprint("Cant save multifile torrent")
                                 # Handle last piece, for the pi torrent this is not needed for current testing
@@ -266,7 +276,6 @@ class PeerWire():
                                 #raise NotImplementedError("To be implemented or last piece to be downloaded not implemented")
                                 self.handshake(self, client_address)                            
                             #break
-
                                 
                             #break
                         

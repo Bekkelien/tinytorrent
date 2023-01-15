@@ -49,8 +49,6 @@ class TorrentFile():
         else:
             length = data[b'info'][b'length']
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
-
-        #print(self.data)
         #return self.data #, self.info_hash
 
     # TODO: Merge to just one tinytorrent specific parsing algorithm
@@ -105,5 +103,5 @@ class TorrentFile():
         tprint(self.metadata)
 
         self.metadata['pieces_hash'] = self.data['info']['pieces']
-
+        # print(self.metadata['files'][0]['path'][0]) Improve this 
         return self.metadata

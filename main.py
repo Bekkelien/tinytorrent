@@ -19,12 +19,12 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['pi.torrent']
-    #files = ['gimp.torrent']
+    #files = ['pi.torrent']
+    files = ['gimp.torrent']
 
     for file in files:
         # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
-
+        
         ### Get Metadata from torrent file ###
         file = TorrentFile(PATH / file)
         file.read_torrent_file() 
