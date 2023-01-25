@@ -2,7 +2,7 @@ from pathlib import Path
 
 # Internals
 from src.config import Config
-from src.read_file import TorrentFile
+from src.read_torrent import TorrentFile
 from src.manager import TrackerManager
 from src.tcp import PeerWire
 from src.helpers import iprint, eprint, wprint, dprint, timer

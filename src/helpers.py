@@ -52,5 +52,9 @@ def tprint(metadata):
         if 'files' in key:
             for file in metadata['files']:
                 print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {file}")
+
+        elif 'announce-list' in key:
+            for idx, _ in enumerate(list(metadata['announce-list'])):
+                print(f"{datetime.now()} [TORRENT] Tracker {idx}: {list(metadata['announce-list'])[idx]}")
         else:
             print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {value}")

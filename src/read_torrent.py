@@ -51,7 +51,7 @@ class TorrentFile():
             self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
         #return self.data #, self.info_hash
 
-    # TODO: Merge to just one tinytorrent specific parsing algorithm
+    # TODO: Merge to just one tinytorrent specific parsing algorithm?
     def parse_torrent_file(self, block_size = 20):
         """ Uses custom TinyTorrent convention """
         self.metadata = {}
@@ -66,7 +66,7 @@ class TorrentFile():
 
         self.metadata['piece_length'] = self.data['info']['piece_length']
         self.metadata['pieces'] = pieces
-        self.metadata['size'] = size # BUG! Wrong size this (remember last piece is smaller)         
+        self.metadata['size'] = None #size # BUG! Wrong size this (remember last piece is smaller)         
         
         # Kinda fixes the BUG in read torrent
         if 'files' in self.data['info']: 

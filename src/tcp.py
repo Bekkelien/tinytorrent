@@ -50,7 +50,7 @@ class PeerMessage():
         self.clientSocket = clientSocket
     
     # TODO: Rename function 
-    def state_message(self, message, length=1):
+    def state_message(self, message, length=1) -> str:
         
         if message.value >= 0:
             iprint("Sending an:", message, "message to peer")
@@ -70,14 +70,17 @@ class PeerMessage():
 
             # Validation NOTE: not really a validation function just checks the response length
             if response[0] == length:
-                iprint("Peer response:", Message(response[1])) # BUG: Fail if response is not a int
+                #iprint("Peer response:", Message(response[1]).name) # BUG: Fail if response is not a int
+                peer_state = Message(response[1]).value
+                return peer_state # TODO:::
 
             else:
                 wprint("Peer message failed, unknown prefix/length")
 
         else:
             eprint("Keep alive message not supported for this client ATM") 
-    
+
+        return None # TODO:::
     # TODO: Function to handle the peer response -> Currently assuming that we get an unchoke on interested message
     # Merge else statements 
 
@@ -109,7 +112,7 @@ class PeerWire():
         """
 
         # HAX: client_address NOTE: new all adresses for testing
-
+        peer_status = 'unknown'
         client_address = client_address[haxhax]
 
 
@@ -155,6 +158,7 @@ class PeerWire():
                 #TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:TESTING NOTE:
                 while True:
                     try:
+                        # HAX
                         response = clientSocket.recv(4096)
                         #  Testing
                         iprint("Response length:",len(response))
@@ -171,16 +175,14 @@ class PeerWire():
                                     #dprint("PAYLOAD:", BitArray(response[5:]).bin)
                                     # Check if full bitfield (Store it? or only store partials?)
 
-                                    # Check if full bitfield (Seeder)
+                                    # Check if full bitfield (Seeder) BUG?
                                     if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare_bits']]):
                                         peer_status = 'seeder' # 100%¨
                                     else:
                                         # NOTE: Does leachers 'never' send bitfield response after handshake ?
                                         peer_status = 'leecher' # Unknown ATM TODO:
                                     
-                                    self.peers_connected.append([client_address[0],client_address[1],peer_status])
-                                    
-                                    dprint(self.peers_connected)
+
                                         
                                     # # TODO: Make logic that drops invalid connections
 
@@ -195,7 +197,11 @@ class PeerWire():
                     try:
                         # TODO: Reimplement this!
                         one_peer_connected_test = PeerMessage(clientSocket)
-                        one_peer_connected_test.state_message(Message.interested)
+                        peer_state = one_peer_connected_test.state_message(Message.interested)
+                        if peer_state:
+                            self.peers_connected.append([client_address[0],client_address[1],peer_status,Message(peer_state).name])
+                            dprint(self.peers_connected)
+                        # peer_status
                         #one_peer_connected_test.have_message(0)
                         #one_peer_connected_test.have_message(1)
 
@@ -207,7 +213,9 @@ class PeerWire():
 
                         
                         for piece in range(self.metadata['pieces']):
-                            # piece = 2703 NOTE: For testing last piece
+                        
+                            #piece = self.metadata['pieces']-1  # NOTE: For testing last piece ONLY
+
                             if piece in self.piece_hax:
                                 continue
                             dprint("Trying to download piece:", piece)
@@ -215,20 +223,27 @@ class PeerWire():
                             # TODO: Handle last piece
                             block_data = b''
                             hax48 = math.ceil(self.metadata['piece_length'] / 2**14) # Make sure this is a integer
-                            #if piece == self.metadata['pieces'] - 1: # Due to zero base index
-                            #    pass Last piece stuff
 
                             for block in range(hax48): 
                                 dprint("Downloading piece:", piece, "block:", block)
-                                if piece == 2703 and hax48 == block + 1:
-                                    dprint("Last piece HAX for pi torrent")
-                                    hax = pack('>IBIII', 13, 6, piece, block*block_size, 1828) # last piece size = (354404132%131072)%2**14 -> 1828
+                                if piece == self.metadata['pieces'] - 1 and hax48 == block + 1: 
+                                    dprint("Last piece HAX ")
+                                    # PI last piece size = (354404132%131072)%2**14 -> 1828
+                                    # GIMP last piece size = (265283496%262144)%2**14 -> 10152
+                                    hax = pack('>IBIII', 13, 6, piece, block*block_size, 10152) 
                                     clientSocket.send(hax)
                                 else:
                                     block_size = 2**14
                                     hax = pack('>IBIII', 13, 6, piece, block*block_size, block_size)
                                     #print(unpack('>IBIII',hax))
                                     clientSocket.send(hax)
+
+                                # +-------------+-----------+---------+-----------------+
+                                # | Piece Index | Offset    | Length  | Data            |
+                                # +-------------+-----------+---------+-----------------+
+                                # |         123 |     16384 |   16384 | (binary data)   |
+                                # +-------------+-----------+---------+-----------------+ 
+ 
                                 ## Solve this problem TODO:
                                 time.sleep(0.5)
                                 #time.sleep(1)
@@ -253,7 +268,15 @@ class PeerWire():
                             if hash == self.metadata['pieces_hash'][(piece*20):20 +(piece*20)]:
                                 iprint("Piece:", piece, "downloaded success" , color="green")
                                 self.torrent_data = self.torrent_data + block_data
-                                iprint("currently downloaded:", len(self.torrent_data), "bytes")
+
+                                self.metadata['downloaded'] = self.metadata['downloaded'] + len(self.torrent_data)
+                                self.metadata['uploaded'] = 0  
+                                self.metadata['left'] = self.metadata['left'] - len(self.torrent_data)
+                                
+                                iprint("Downloaded:", self.metadata['downloaded'], 
+                                           "Uploaded:", self.metadata['uploaded'], 
+                                                    "Left:", self.metadata['left'])
+                                                            
                                 self.piece_hax.append(piece)
 
                                 # Save to file system one file - NOTE: not TESTED because last piece is not downloaded correctly yet.
