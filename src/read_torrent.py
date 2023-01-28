@@ -12,8 +12,11 @@ class TorrentFile():
     def __init__(self, file):
         self.file_path = Path(file)
 
-    def read(self):
+    def read(self) -> dict:
+        """ Read a torrent file and return a dictionary of metadata """
+
         metadata = {}
+
         iprint("New torrent file:", self.file_path.name, color="green")
 
         with open(self.file_path, 'rb') as file:
