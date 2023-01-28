@@ -23,13 +23,6 @@ if __name__ == '__main__':
     files = ['gimp.torrent']
 
     for file in files:
-        # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
-        
-        ### Get Metadata from torrent file ###
-        #file = TorrentFile2(PATH / file)
-        #file.read_torrent_file() 
-        #metadata = file.parse_torrent_file()
-
         metadata = TorrentFile(PATH / file).read()
 
         ### Get peers IP addresses ###

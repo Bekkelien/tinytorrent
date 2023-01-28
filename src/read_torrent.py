@@ -21,15 +21,15 @@ class TorrentFile():
         
         metadata['info_hash'] = hashlib.sha1(bencode(torrent[b'info'])).digest()
 
-        if b'announce' in torrent: metadata['announce_list'] = torrent[b'announce'].decode()
+        if b'announce' in torrent: metadata['announce_list'] = [torrent[b'announce'].decode()]
         if b'announce-list' in torrent: metadata['announce_list'] = [x[0].decode() for x in torrent[b'announce-list']]
 
-        if 'files' in torrent[b'info']:
-            metadata[b'size'] = sum(file[b'length'] for file in torrent[b'info'][b'files'])
+        if b'files' in torrent[b'info']:
+            metadata['size'] = sum(file[b'length'] for file in torrent[b'info'][b'files'])
             metadata['files'] = [{'length': path[b'length'], 'path': [path[b'path'][0].decode()]} for path in torrent[b'info'][b'files']]
         else:
-            metadata['size'] = torrent[b'info'][b'length']
-            metadata['files'] = [{'length': torrent[b'info'][b'length'], 'path': [torrent[b'info'][b'name'].decode()]}]
+            metadata['size'] = torrent[b'info'][b'piece length'] #BUG
+            metadata['files'] = [{'length': torrent[b'info'][b'piece length'], 'path': [torrent[b'info'][b'name'].decode()]}]
 
         metadata['name'] = torrent[b'info'][b'name'].decode()
         metadata['piece_length'] = torrent[b'info'][b'piece length']
@@ -40,12 +40,12 @@ class TorrentFile():
         metadata['downloaded'] = 0
         metadata['uploaded'] = 0
         
-        tprint(metadata)  
+        tprint(metadata) 
         
         # Do not print the info hash and pieces hash
         metadata['info_hash'] = metadata['info_hash']
         metadata['pieces'] = torrent[b'info'][b'pieces']  
-
+ 
         return metadata
         
 if __name__ == '__main__':

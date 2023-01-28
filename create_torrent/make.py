@@ -13,4 +13,4 @@ if __name__ == "__main__":
 
     if args.folder:
         print(args.folder)
-        os.system(f"py3createtorrent -t udp://tracker.opentrackr.org:1337/announce ./create_torrent/files/{args.folder}")
+        os.system(f"py3createtorrent -t udp://tracker.opentrackr.org:1337/announce ./create_torrent/torrents/{args.folder}")
