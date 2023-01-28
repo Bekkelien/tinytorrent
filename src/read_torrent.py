@@ -21,11 +21,8 @@ class TorrentFile():
         
         metadata['info_hash'] = hashlib.sha1(bencode(torrent[b'info'])).digest()
 
-        if b'announce' in torrent:
-            metadata['announce_list'] = torrent[b'announce'].decode()
-
-        if b'announce-list' in torrent:
-            metadata['announce_list'] = [x[0].decode() for x in torrent[b'announce-list']]
+        if b'announce' in torrent: metadata['announce_list'] = torrent[b'announce'].decode()
+        if b'announce-list' in torrent: metadata['announce_list'] = [x[0].decode() for x in torrent[b'announce-list']]
 
         if 'files' in torrent[b'info']:
             metadata[b'size'] = sum(file[b'length'] for file in torrent[b'info'][b'files'])
