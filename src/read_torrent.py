@@ -1,107 +1,60 @@
 import math
 import hashlib
-
 from pathlib import Path
 from bencoding import bdecode, bencode 
 
 # Internals
-from src.helpers import iprint, eprint, tprint #,timer
+from src.helpers import iprint, tprint
+
+BLOCK_SIZE = 20
 
 class TorrentFile():
-    def __init__(self, torrent_file):
-        self.data = {}
-        self.file_path = Path(torrent_file)
+    def __init__(self, file):
+        self.file_path = Path(file)
 
-    #@timer
-    def read_torrent_file(self):
-        """ Uses the convention from: https://en.wikipedia.org/wiki/Torrent_file#cite_note-bep0003-1 """
-
+    def read(self):
+        metadata = {}
         iprint("New torrent file:", self.file_path.name, color="green")
 
         with open(self.file_path, 'rb') as file:
-            data = bdecode(file.read())
+            torrent = bdecode(file.read())
         
-        self.info_hash = hashlib.sha1(bencode(data[b'info'])).digest()
+        metadata['info_hash'] = hashlib.sha1(bencode(torrent[b'info'])).digest()
 
-        if b'announce' in data:
-            self.data['announce'] = data[b'announce'].decode()
+        if b'announce' in torrent:
+            metadata['announce_list'] = torrent[b'announce'].decode()
 
-        if b'announce-list' in data:
-            self.data['announce-list'] = [x[0].decode() for x in data[b'announce-list']]
-                   
-        name = data[b'info'][b'name'].decode()
-        piece_length = data[b'info'][b'piece length']
-        pieces = data[b'info'][b'pieces']
+        if b'announce-list' in torrent:
+            metadata['announce_list'] = [x[0].decode() for x in torrent[b'announce-list']]
 
-        # BUG (For instance single torrent has name files in it, although this is very unlikely in practice)
-        if b'files' in data[b'info']: 
-            paths = data[b'info'][b'files']
-
-            if len(paths[0][b'path']) == 1:
-                files = []
-                for i in range(len(paths)):
-                    files.append({'length': paths[i][b'length'], 'path': [paths[i][b'path'][0].decode()]})
-            else:
-                eprint("Reading torrent file failed: multiple paths within one file path") # NOTE: Overkill error handling? Maybe this ''never'' happens?
-
-            self.data['info'] = {'files': files, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
-
+        if 'files' in torrent[b'info']:
+            metadata[b'size'] = sum(file[b'length'] for file in torrent[b'info'][b'files'])
+            metadata['files'] = [{'length': path[b'length'], 'path': [path[b'path'][0].decode()]} for path in torrent[b'info'][b'files']]
         else:
-            length = data[b'info'][b'length']
-            self.data['info'] = {'length': length, 'name': name, 'piece_length': piece_length, 'pieces': pieces}
-        #return self.data #, self.info_hash
+            metadata['size'] = torrent[b'info'][b'length']
+            metadata['files'] = [{'length': torrent[b'info'][b'length'], 'path': [torrent[b'info'][b'name'].decode()]}]
 
-    # TODO: Merge to just one tinytorrent specific parsing algorithm?
-    def parse_torrent_file(self, block_size = 20):
-        """ Uses custom TinyTorrent convention """
-        self.metadata = {}
-
-        if 'announce-list' in self.data:
-            self.metadata['announce-list'] = set(self.data['announce-list'] + [self.data['announce']])
-        else:
-            self.metadata['announce-list'] = set([self.data['announce']])
-
-        pieces = int(len(self.data['info']['pieces'])/block_size)
-        size = self.data['info']['piece_length'] * pieces
-
-        self.metadata['piece_length'] = self.data['info']['piece_length']
-        self.metadata['pieces'] = pieces
-        self.metadata['size'] = None #size # BUG! Wrong size this (remember last piece is smaller)         
+        metadata['name'] = torrent[b'info'][b'name'].decode()
+        metadata['piece_length'] = torrent[b'info'][b'piece length']
+        metadata['pieces_count'] = int(len(torrent[b'info'][b'pieces'])/BLOCK_SIZE)
+        metadata['bitfield_spare'] = 8 * math.ceil(metadata['pieces_count']/8) - metadata['pieces_count']
+        metadata['bitfield_length'] = metadata['pieces_count'] + metadata['bitfield_spare']
+        metadata['left'] = metadata['size']
+        metadata['downloaded'] = 0
+        metadata['uploaded'] = 0
         
-        # Kinda fixes the BUG in read torrent
-        if 'files' in self.data['info']: 
-            temp = []
-            for i in range(len(self.data['info']['files'])):
-                temp.append(self.data['info']['files'][i])
+        tprint(metadata)  
+        
+        # Do not print the info hash and pieces hash
+        metadata['info_hash'] = metadata['info_hash']
+        metadata['pieces'] = torrent[b'info'][b'pieces']  
 
-            self.metadata['files'] = temp
-        else:                
-            self.metadata['files'] = [{'length': self.data['info']['length'], 'path': [self.data['info']['name']]}]
-        bitfield_spare_bits = 8 * math.ceil(pieces/8) - pieces
+        return metadata
+        
+if __name__ == '__main__':
+        PATH = Path('./src/files/')
+        file_1 = 'gimp.torrent'
 
-        self.metadata['bitfield_spare_bits'] = bitfield_spare_bits
-        self.metadata['bitfield_length'] = pieces + bitfield_spare_bits
-
-
-        self.metadata['downloaded'] = 0
-        self.metadata['uploaded'] = 0
-
-        # Kinda fixes the BUG in read torrent
-        if 'files' in self.data['info']:
-            left = 0
-            for file in self.metadata['files']:
-                left += file['length']
-            
-            self.metadata['left'] = left
-
-        else:
-            self.metadata['left'] = self.data['info']['length']
-
-        self.metadata['info_hash'] = self.info_hash
-        self.metadata['name'] = self.data['info']['name']
-
-        tprint(self.metadata)
-
-        self.metadata['pieces_hash'] = self.data['info']['pieces']
-        # print(self.metadata['files'][0]['path'][0]) Improve this 
-        return self.metadata
+        # Parse a torrent files
+        metadata = TorrentFile(PATH / file_1).read()
+        print(metadata)
