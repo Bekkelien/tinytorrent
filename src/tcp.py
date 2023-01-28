@@ -176,7 +176,7 @@ class PeerWire():
                                     # Check if full bitfield (Store it? or only store partials?)
 
                                     # Check if full bitfield (Seeder) BUG?
-                                    if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare_bits']]):
+                                    if all(BitArray(response[5:]).bin[0:self.metadata['bitfield_length']-self.metadata['bitfield_spare']]):
                                         peer_status = 'seeder' # 100%¨
                                     else:
                                         # NOTE: Does leachers 'never' send bitfield response after handshake ?
@@ -206,15 +206,15 @@ class PeerWire():
                         #one_peer_connected_test.have_message(1)
 
                         # Just testing more nesting :)
-                        print(self.metadata['pieces'])
+                        print(self.metadata['pieces_count'])
                         # NOTE: this testing
                         import time
                         import hashlib
 
                         
-                        for piece in range(self.metadata['pieces']):
+                        for piece in range(self.metadata['pieces_count']):
                         
-                            #piece = self.metadata['pieces']-1  # NOTE: For testing last piece ONLY
+                            #piece = self.metadata['pieces_count']-1  # NOTE: For testing last piece ONLY
 
                             if piece in self.piece_hax:
                                 continue
@@ -226,7 +226,7 @@ class PeerWire():
 
                             for block in range(hax48): 
                                 dprint("Downloading piece:", piece, "block:", block)
-                                if piece == self.metadata['pieces'] - 1 and hax48 == block + 1: 
+                                if piece == self.metadata['pieces_count'] - 1 and hax48 == block + 1: 
                                     dprint("Last piece HAX ")
                                     # PI last piece size = (354404132%131072)%2**14 -> 1828
                                     # GIMP last piece size = (265283496%262144)%2**14 -> 10152
@@ -263,9 +263,9 @@ class PeerWire():
                             #dprint("Pice length for data rev",len(block_data))
                             hash = hashlib.sha1(block_data).digest()
                             #dprint("Hash of piece:", piece, "are:", hash)
-                            #dprint("Hash of piece in metadata:", temp_sha_test['info']['pieces'][(piece*20):20 +(piece*20)])
+                            #dprint("Hash of piece in metadata:", temp_sha_test['info']['pieces_count'][(piece*20):20 +(piece*20)])
 
-                            if hash == self.metadata['pieces_hash'][(piece*20):20 +(piece*20)]:
+                            if hash == self.metadata['pieces'][(piece*20):20 +(piece*20)]:
                                 iprint("Piece:", piece, "downloaded success" , color="green")
                                 self.torrent_data = self.torrent_data + block_data
 
@@ -280,7 +280,7 @@ class PeerWire():
                                 self.piece_hax.append(piece)
 
                                 # Save to file system one file - NOTE: not TESTED because last piece is not downloaded correctly yet.
-                                if piece == self.metadata['pieces']-1: # Due to zero base index
+                                if piece == self.metadata['pieces_count']-1: # Due to zero base index
                                     iprint("File downloaded successfully")
                                     # NOTE: only if torrent is a single file
                                     if len(self.metadata['files'][0]['path']) == 1: 

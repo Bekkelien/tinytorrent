@@ -26,9 +26,11 @@ if __name__ == '__main__':
         # Move, 3 tings for one "thing" how is this normally done to reduce dependencies? -- 
         
         ### Get Metadata from torrent file ###
-        file = TorrentFile(PATH / file)
-        file.read_torrent_file() 
-        metadata = file.parse_torrent_file()
+        #file = TorrentFile2(PATH / file)
+        #file.read_torrent_file() 
+        #metadata = file.parse_torrent_file()
+
+        metadata = TorrentFile(PATH / file).read()
 
         ### Get peers IP addresses ###
         tracker = TrackerManager(metadata)

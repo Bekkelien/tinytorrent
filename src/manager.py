@@ -36,7 +36,7 @@ class TrackerManager():
 
     def get_clients(self):
         # New version fetches all clients from the peers, NOTE: Reduce client amount should not be here because this is fast!
-        for announce in self.metadata['announce-list']:
+        for announce in self.metadata['announce_list']:
 
             if 'ipv6' in announce:
                 wprint("IPv6 is currently not supported") 
