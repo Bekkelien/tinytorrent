@@ -82,41 +82,43 @@ class PeerMessage():
     # TODO: Function to handle the peer response -> Currently assuming that we get an unchoke on interested message
     # Merge else statements 
 
-    def bitfield(clientSocket, metadata):
-
+    def bitfield(clientSocket, metadata) -> str:
+        """ Returns unknown, seeder or leecher (NB, leecher might be impossible)"""
+        
+        # NOTE: Change timeout for clientSocket, bitfield shorter to speed up the client?
         try:
             response = clientSocket.recv(4096) # TODO: Set buffer in config 
         
         except:
-            response = [] # TODO:
+            wprint("Peer did not send a bitfield message or error occurred")
+            response = [] 
+            
 
         if len(response) < 5:
-            wprint("Peer responded with unknown response after handshake")
-            return
+            wprint("Peer responded with, short/unknown message after handshake")
+            return 'unknown'
 
-        message_id = unpack('>b', response[4:5])[0] # TODO: Unpack all values
-
-        if 0 <= message_id <= 9: # Get 0 and 9 values fromEnum
-            iprint("Peer send current message id after handshake:", Message(message_id).name)
+        # TODO: Unpack all values
+        bitfield_id = unpack('>b', response[4:5])[0]
+        bitfield = response[5:]
         
-        else: #TODO Better and print
-            return
+        if bitfield_id < 0 or bitfield_id > 9: # TODO Get 0 and 9 values fromEnum
+            wprint("Peer responded with unknown message ID after handshake")
+            return 'unknown'
 
-        if Message(message_id).name == Message.bitfield.name:
-            dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
-
-            if len(BitArray(response[5:]).bin) == metadata['bitfield_length']:
-                dprint("Bitfield accepted")
-                #dprint("PAYLOAD:", BitArray(response[5:]).bin)
-                # Check if full bitfield (Store it? or only store partials?)
-
-                ## Check if full bitfield (Seeder) BUG?
-                #if all(BitArray(response[5:]).bin[0:metadata['bitfield_length']-metadata['bitfield_spare']]):
-                #    peer_status = 'seeder' # 100%¨
-                #else:
-                #    # NOTE: Does leachers 'never' send bitfield response after handshake ?
-                #    peer_status = 'leecher' # Unknown ATM TODO:
-
+        if Message(bitfield_id).name == Message.bitfield.name:
+            if len(BitArray(bitfield).bin) == metadata['bitfield_length']:
+                
+                # Check if full bitfield (Seeder) 
+                if all(BitArray(bitfield).bin[0 : metadata['bitfield_length'] - metadata['bitfield_spare']]):
+                    iprint("Bitfield accepted ")
+                    return 'seeder' # 100%¨
+                else:
+                    iprint("Bitfield accepted ")
+                    # NOTE: Does leachers 'never' send bitfield response after handshake ?
+                    return 'leecher' # Unknown ATM TODO:
+        else:
+            return 'unknown'
 
 class PeerWire():
     def __init__(self, metadata):
@@ -200,5 +202,9 @@ class PeerWire():
                 iprint("Handshake accepted")
                 self._extensions(handshake_reserved) # NOTE: No handling ATM
                 self._peer_client_software(handshake_client_id)
-                PeerMessage.bitfield(clientSocket, self.metadata)
+
+                # PEER IP - Store state 
+
+                peer_state = PeerMessage.bitfield(clientSocket, self.metadata)
+                print(peer_state)
                 # BITFIELD MESSAGE
