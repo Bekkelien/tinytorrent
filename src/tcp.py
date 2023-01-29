@@ -57,8 +57,12 @@ class PeerMessage():
             message = pack('>Ib', length, message.value)
             self.clientSocket.send(message)
 
-            # Response from peer
-            response = self.clientSocket.recv(config['tcp']['state_message_buffer']) 
+            # Response from peer TODO:
+            try:
+                response = self.clientSocket.recv(config['tcp']['state_message_buffer']) 
+            except:
+                return  # NOTE:
+
             if len(response) == 5: # TODO: Improve error handling
                 response = unpack('>Ib', response)
 
@@ -83,15 +87,16 @@ class PeerMessage():
     # Merge else statements 
 
     def bitfield(clientSocket, metadata) -> str:
-        """ Returns unknown, seeder or leecher (NB, leecher might be impossible)"""
+        """ Returns unknown, seeder or leecher """
         
         # NOTE: Change timeout for clientSocket, bitfield shorter to speed up the client?
+        response = [] 
         try:
             response = clientSocket.recv(4096) # TODO: Set buffer in config 
         
         except:
             wprint("Peer did not send a bitfield message or error occurred")
-            response = [] 
+            return 'unknown'
             
 
         if len(response) < 5:
@@ -204,7 +209,14 @@ class PeerWire():
                 self._peer_client_software(handshake_client_id)
 
                 # PEER IP - Store state 
-
                 peer_state = PeerMessage.bitfield(clientSocket, self.metadata)
                 print(peer_state)
-                # BITFIELD MESSAGE
+
+                message_state = PeerMessage(clientSocket).state_message(Message.interested)
+                
+                #TODO: Make state messages more general to handle no state response from the peer
+                # print(Message(message_state).name)
+                print(message_state)
+
+                # NOTE: Client sockets are not closed? 
+                # STOP FUNCTION HERE

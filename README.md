@@ -15,9 +15,18 @@ pytest
 pytest -s # To display the prints
 ```
 
-#### "Verified" working clients (Handshake-Bitfield-unchoke):
+#### Clients (Handshake-Bitfield-unchoke) state:
 ```console
-qBittorrent
+qBittorrent -> OK response
+BBtor -> unknown bitfield, but does unchoke 
+BitWombat -> unknown bitfield, but does unchoke
+DelugeTorrent -> unknown bitfield, but does unchoke
+µTorrent Web -> unknown bitfield, but does unchoke 
+µTorrent -> Peer responded with unknown message ID after handshake, but does unchoke
+Transmission -> Bitfield ok, but returns choke
+b'FD63YQuRdqcfgiHPVKhr' What is this client?
+b'MG-3.01.4276BOSmDjLj' What is this client? -> unknown bitfield, but does unchoke 
+b'TIX0314-e9e8f3i0g3d0' What is this client? -> No bitfield?
 ```
 ```console
 ## TIP's'
