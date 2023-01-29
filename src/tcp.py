@@ -83,6 +83,8 @@ class PeerMessage():
     # TODO: Function to handle the peer response -> Currently assuming that we get an unchoke on interested message
     # Merge else statements 
 
+
+
 class PeerWire():
     def __init__(self, metadata):
         self.metadata = metadata
@@ -106,16 +108,19 @@ class PeerWire():
     def handshake(self, client_address, haxhax) -> bool: 
         """ 
         'BitTorrent protocol' 1.0
+
+        Handshake:
         <len(pstr)><pstr><reserved><info_hash><peer_id> 
         
         """
         # HAX: client_address NOTE: new all adresses for testing
-        peer_status = 'unknown'
         client_address = client_address[haxhax]
 
-        # NOTE:
-        message = pack('>1s19s8s20s20s',Handshake.pstrlen,Handshake.pstr,Handshake.reserved, \
-                                            self.metadata['info_hash'], config['client']['peer_id'].encode())
+        message = pack('>1s19s8s20s20s',Handshake.pstrlen,
+                                        Handshake.pstr,
+                                        Handshake.reserved, \
+                                        self.metadata['info_hash'], 
+                                        config['client']['peer_id'].encode())
         
         #print(message)
 
@@ -125,31 +130,41 @@ class PeerWire():
 
         try:  
             iprint("Connectig to peer:", client_address[0], "::" , client_address[1])
-            # Connect to peer
+
             clientSocket.connect((tuple(client_address)))
-
-            # Send message to peer 
             clientSocket.send(message)
-
-            # Fetch response from peer
             response = clientSocket.recv(config['tcp']['handshake_buffer']) 
-            response_length = len(response)
+
+            iprint("Connected")
+
         
-        except:
-            dprint("Connect to peer failed:", client_address[0], "::" , client_address[1])
+        except Exception as e: # TODO Improve this
+            dprint("Connect to peer failed with exception:", e)
             return False
-                 
-        if Handshake.pstrlen + Handshake.pstr == response[0:20] and len(response) >= 68:
+        
+        # TODO :: Create a function for this!
 
+        # Verify that the handshake response is of the expected type
+        if 49 <= len(response) <= 67:
+            wprint("Handshake response of type: compact peer formate is not supported")
+    
+        elif len(response) >= 68:
             response = unpack('>1s19s8s20s20s', response[0:68])
-            response_pstr, response_reserved, response_info_hash = response[1],response[2],response[3]
 
-            dprint("Peer handshake response | protocol version:", response_pstr.decode("utf-8", "ignore"), \
-                                    ",reserve:", response_reserved.decode("utf-8", "ignore"), response_reserved, "response length:", response_length, "bytes")
+            # Parse handshake response (Bytes) b'data'
+            handshake_pstrlen = response[0]
+            handshake_pstr = response[1]
+            handshake_reserved = response[2]            
+            handshake_info_hash = response[3]
+            handshake_client_id = response[4]
             
+            if (Handshake.pstrlen + Handshake.pstr) != handshake_pstrlen + handshake_pstr:
+                wprint("Handshake response failed unknown protocol:", handshake_pstr.decode("utf-8", "ignore"))
+                return False
+
             # Validate
-            if self.metadata['info_hash'] == response_info_hash:
-                response_peer_id = response[4]
-                iprint("Connected to peer with peer client ID:", response_peer_id)
-                self._extensions(response_reserved) # NOTE: No handling ATM
-                self._peer_client_software(response_peer_id)
+            if self.metadata['info_hash'] == handshake_info_hash:
+                iprint("Handshake accepted")
+                self._extensions(handshake_reserved) # NOTE: No handling ATM
+                self._peer_client_software(handshake_client_id)
+                # BITFIELD MESSAGE
