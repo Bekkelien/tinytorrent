@@ -15,7 +15,6 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 config = Config().get_config()
 
 class Message(Enum):
-    # keepalive = -1 #BUG
     choke = 0
     unchoke = 1
     interested = 2
@@ -83,6 +82,40 @@ class PeerMessage():
     # TODO: Function to handle the peer response -> Currently assuming that we get an unchoke on interested message
     # Merge else statements 
 
+    def bitfield(clientSocket, metadata):
+
+        try:
+            response = clientSocket.recv(4096) # TODO: Set buffer in config 
+        
+        except:
+            response = [] # TODO:
+
+        if len(response) < 5:
+            wprint("Peer responded with unknown response after handshake")
+            return
+
+        message_id = unpack('>b', response[4:5])[0] # TODO: Unpack all values
+
+        if 0 <= message_id <= 9: # Get 0 and 9 values fromEnum
+            iprint("Peer send current message id after handshake:", Message(message_id).name)
+        
+        else: #TODO Better and print
+            return
+
+        if Message(message_id).name == Message.bitfield.name:
+            dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
+
+            if len(BitArray(response[5:]).bin) == metadata['bitfield_length']:
+                dprint("Bitfield accepted")
+                #dprint("PAYLOAD:", BitArray(response[5:]).bin)
+                # Check if full bitfield (Store it? or only store partials?)
+
+                ## Check if full bitfield (Seeder) BUG?
+                #if all(BitArray(response[5:]).bin[0:metadata['bitfield_length']-metadata['bitfield_spare']]):
+                #    peer_status = 'seeder' # 100%¨
+                #else:
+                #    # NOTE: Does leachers 'never' send bitfield response after handshake ?
+                #    peer_status = 'leecher' # Unknown ATM TODO:
 
 
 class PeerWire():
@@ -167,4 +200,5 @@ class PeerWire():
                 iprint("Handshake accepted")
                 self._extensions(handshake_reserved) # NOTE: No handling ATM
                 self._peer_client_software(handshake_client_id)
+                PeerMessage.bitfield(clientSocket, self.metadata)
                 # BITFIELD MESSAGE
