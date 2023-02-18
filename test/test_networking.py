@@ -1,5 +1,3 @@
-import pytest
-
 from src.networking import parse_tracker_peers_ip
 
 def test_tracker_addresses_to_array():

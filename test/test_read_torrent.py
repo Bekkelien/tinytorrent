@@ -1,8 +1,3 @@
-import pytest
-import hashlib
-
-from pathlib import Path
-
 from src.read_torrent import TorrentFile
 
 def test_torrentfile_read():

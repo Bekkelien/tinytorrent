@@ -49,7 +49,7 @@ class PeerMessage():
     
     # TODO: Rename function 
     def state_message(self, message, length=1) -> str:
-        
+        # NOTE: Currently assuming we are choked if we don't get a state message back from the peer
         if message.value >= 0:
             iprint("Sending an:", message, "message to peer")
 
@@ -61,14 +61,14 @@ class PeerMessage():
             try:
                 response = self.clientSocket.recv(config['tcp']['state_message_buffer']) 
             except:
-                return  # NOTE:
+                return Message.choke.value  # NOTE:
 
             if len(response) == 5: # TODO: Improve error handling
                 response = unpack('>Ib', response)
 
             else:
                 wprint("Peer state message can't be unpacked, response not correct length")
-                return # NOTE: If we get here we will fail later due to assuming unchoke
+                return Message.choke.value # NOTE: If we get here we will fail later due to assuming unchoke
 
             # Validation NOTE: not really a validation function just checks the response length
             if response[0] == length:
@@ -82,48 +82,42 @@ class PeerMessage():
         else:
             eprint("Keep alive message not supported for this client ATM") 
 
-        return None # TODO:::
+        return Message.choke.value  # TODO:::
+
     # TODO: Function to handle the peer response -> Currently assuming that we get an unchoke on interested message
     # Merge else statements 
 
-    def bitfield(clientSocket, metadata) -> str:
-        """ Returns unknown, seeder or leecher """
-        
-        # NOTE: Change timeout for clientSocket, bitfield shorter to speed up the client?
-        response = [] 
+
+    def bitfield(clientSocket, response = []) -> bytes:
+        """ Receives a bitfield response and validates it """
         try:
             response = clientSocket.recv(4096) # TODO: Set buffer in config 
-        
+            bitfield_id = unpack('>b', response[4:5])[0]
+
         except:
-            wprint("Peer did not send a bitfield message or error occurred")
-            return 'unknown'
-            
+            wprint("Peer did not send a bitfield message in a timely manner")
+            return b''
 
-        if len(response) < 5:
-            wprint("Peer responded with, short/unknown message after handshake")
-            return 'unknown'
+        if bitfield_id == Message.bitfield.value:
+            bitfield_payload = response[5:]
+            iprint("Bitfield received")
+            return bitfield_payload
 
-        # TODO: Unpack all values
-        bitfield_id = unpack('>b', response[4:5])[0]
-        bitfield = response[5:]
-        
-        if bitfield_id < 0 or bitfield_id > 9: # TODO Get 0 and 9 values fromEnum
-            wprint("Peer responded with unknown message ID after handshake")
-            return 'unknown'
-
-        if Message(bitfield_id).name == Message.bitfield.name:
-            if len(BitArray(bitfield).bin) == metadata['bitfield_length']:
-                
-                # Check if full bitfield (Seeder) 
-                if all(BitArray(bitfield).bin[0 : metadata['bitfield_length'] - metadata['bitfield_spare']]):
-                    iprint("Bitfield accepted ")
-                    return 'seeder' # 100%¨
-                else:
-                    iprint("Bitfield accepted ")
-                    # NOTE: Does leachers 'never' send bitfield response after handshake ?
-                    return 'leecher' # Unknown ATM TODO:
         else:
-            return 'unknown'
+            wprint("Bitfield message invalid")
+            return b''
+
+    def bitfield_status(bitfield_payload, metadata, peer_state='unknown') -> str:
+        # Assuming that the bitfield header contains bitfield, aka: message id == 5:
+        
+        if bitfield_payload:
+            if len(BitArray(bitfield_payload).bin) == metadata['bitfield_length']:
+                if BitArray(bitfield_payload).bin.count('1') == metadata['bitfield_length'] - metadata['bitfield_spare']:
+                    peer_state = 'seeder' # Peer has 100% of data 
+                else:
+                    peer_state = 'leecher' # Peer has x% of data 
+        iprint("Peer state:", peer_state) 
+        return peer_state
 
 class PeerWire():
     def __init__(self, metadata):
@@ -162,20 +156,18 @@ class PeerWire():
                                         self.metadata['info_hash'], 
                                         config['client']['peer_id'].encode())
         
-        #print(message)
-
         # Network setup TCP socket
         clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientSocket.settimeout(config['tcp']['timeout'])
 
         try:  
-            iprint("Connectig to peer:", client_address[0], "::" , client_address[1])
+            iprint("Connecting to peer:", client_address[0], "::" , client_address[1])
 
             clientSocket.connect((tuple(client_address)))
             clientSocket.send(message)
             response = clientSocket.recv(config['tcp']['handshake_buffer']) 
 
-            iprint("Connected")
+            iprint("Connected to peer", client_address[0], "::" , client_address[1])
 
         
         except Exception as e: # TODO Improve this
@@ -208,15 +200,18 @@ class PeerWire():
                 self._extensions(handshake_reserved) # NOTE: No handling ATM
                 self._peer_client_software(handshake_client_id)
 
-                # PEER IP - Store state 
-                peer_state = PeerMessage.bitfield(clientSocket, self.metadata)
-                print(peer_state)
+                # Check for bitfield response
+                bitfield_payload = PeerMessage.bitfield(clientSocket)
+                bitfield_status = PeerMessage.bitfield_status(bitfield_payload, self.metadata)
 
-                message_state = PeerMessage(clientSocket).state_message(Message.interested)
+                # Send interested message to try to unkchoke the peer
+                message_state = PeerMessage(clientSocket).state_message(Message.interested) # TODO Fix function allot 
+
+                # Error print just used for debugging ATM
+                eprint(client_address, bitfield_status, Message(message_state).name)
                 
-                #TODO: Make state messages more general to handle no state response from the peer
-                # print(Message(message_state).name)
-                print(message_state)
+                # TODO: Make a system to keep track of peers and their status
+ 
 
                 # NOTE: Client sockets are not closed? 
                 # STOP FUNCTION HERE

@@ -4,7 +4,7 @@ from pathlib import Path
 from src.config import Config
 from src.read_torrent import TorrentFile
 from src.manager import TrackerManager
-from src.tcp import PeerWire
+from src.protocol import PeerWire
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
 # Configuration settings
