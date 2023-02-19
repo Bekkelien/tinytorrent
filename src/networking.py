@@ -75,16 +75,16 @@ def parse_tracker_peers_ip(payload_addresses, split=6):
 
     peers = int(response_length/split)
 
-    client_addresses = []
+    peer_ip = []
     for index in range(0,response_length,split):
         ip = socket.inet_ntoa(payload_addresses[index:index+4])            # IP   4 Bytes # NOTE: will fail if ip is not valid?
         port = unpack("!H", payload_addresses[index+4:index+6])[0]  # Port 2 Bytes
         if port > 1024 and port <= 65535:
-            client_addresses.append([ip,port])
+            peer_ip.append([ip,port])
 
     # NOTE: Typically tracker respond with this clients address as well to peers-1 is ok or even expected when announce or scrape after first time 
-    iprint("Tracker responded with:", len(client_addresses), "peers with valid ip/port combination of total:", peers ,"peers")
-    return client_addresses
+    iprint("Tracker responded with:", len(peer_ip), "peers with valid ip/port combination of total:", peers ,"peers")
+    return peer_ip
 
 
 """

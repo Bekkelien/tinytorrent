@@ -31,7 +31,7 @@ class UdpTracker:
 
         self.hostname = announce
         self.metadata = metadata
-        self.client_addresses = []
+        self.peer_ip = []
 
         try:
             self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
@@ -102,16 +102,16 @@ class UdpTracker:
             if Action.announce.value == response_action and transaction_id == response_transaction_id:
                 interval, leechers, seeders = message[2], message[3], message[4]
             
-                self.client_addresses = parse_tracker_peers_ip(response[0][20:])
+                self.peer_ip = parse_tracker_peers_ip(response[0][20:])
 
-                if self.client_addresses:  
+                if self.peer_ip:  
                     iprint("UDP Tracker announce accepted, re-announce interval:", interval, "leechers:", leechers, "seeders:" ,seeders)
-                    return self.client_addresses
+                    return self.peer_ip
                 
-                else: self.client_addresses = [] 
+                else: self.peer_ip = [] 
 
         wprint("UDP Tracker announce response failure")
-        return self.client_addresses
+        return self.peer_ip
 
     #@timer
     def scrape(self):

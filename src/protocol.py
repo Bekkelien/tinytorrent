@@ -112,7 +112,7 @@ class PeerMessage():
         
         if bitfield_payload:
             if len(BitArray(bitfield_payload).bin) == metadata['bitfield_length']:
-                if BitArray(bitfield_payload).bin.count('1') == metadata['bitfield_length'] - metadata['bitfield_spare']:
+                if BitArray(bitfield_payload).bin.count('1') == metadata['bitfield_length'] - metadata['bitfield_spare']: # BUG
                     peer_state = 'seeder' # Peer has 100% of data 
                 else:
                     peer_state = 'leecher' # Peer has x% of data 
@@ -139,7 +139,7 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
 
     @timer
-    def handshake(self, client_address, haxhax, test) -> bool: 
+    def handshake(self, peer_ip, haxhax, test) -> bool: 
         """ 
         'BitTorrent protocol' 1.0
 
@@ -148,7 +148,7 @@ class PeerWire():
         
         """
         # HAX: client_address NOTE: new all adresses for testing
-        client_address = client_address[haxhax]
+        peer_ip = peer_ip[haxhax]
 
         message = pack('>1s19s8s20s20s',Handshake.pstrlen,
                                         Handshake.pstr,
@@ -161,13 +161,13 @@ class PeerWire():
         clientSocket.settimeout(config['tcp']['timeout'])
 
         try:  
-            iprint("Connecting to peer:", client_address[0], "::" , client_address[1])
+            iprint("Connecting to peer:", peer_ip[0], "::" , peer_ip[1])
 
-            clientSocket.connect((tuple(client_address)))
+            clientSocket.connect((tuple(peer_ip)))
             clientSocket.send(message)
             response = clientSocket.recv(config['tcp']['handshake_buffer']) 
 
-            iprint("Connected to peer", client_address[0], "::" , client_address[1])
+            iprint("Connected to peer", peer_ip[0], "::" , peer_ip[1])
 
         
         except Exception as e: # TODO Improve this
@@ -208,7 +208,7 @@ class PeerWire():
                 message_state = PeerMessage(clientSocket).state_message(Message.interested) # TODO Fix function allot 
 
                 # Error print just used for debugging ATM
-                test.append([client_address, bitfield_status, Message(message_state).name])
+                test.append([peer_ip, bitfield_status, Message(message_state).name])
 
                 print(test)
                 
