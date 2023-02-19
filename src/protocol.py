@@ -139,7 +139,7 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
 
     @timer
-    def handshake(self, client_address, haxhax) -> bool: 
+    def handshake(self, client_address, haxhax, test) -> bool: 
         """ 
         'BitTorrent protocol' 1.0
 
@@ -204,14 +204,16 @@ class PeerWire():
                 bitfield_payload = PeerMessage.bitfield(clientSocket)
                 bitfield_status = PeerMessage.bitfield_status(bitfield_payload, self.metadata)
 
-                # Send interested message to try to unkchoke the peer
+                # Send interested message to try to unchoke the peer
                 message_state = PeerMessage(clientSocket).state_message(Message.interested) # TODO Fix function allot 
 
                 # Error print just used for debugging ATM
-                eprint(client_address, bitfield_status, Message(message_state).name)
+                test.append([client_address, bitfield_status, Message(message_state).name])
+
+                print(test)
                 
                 # TODO: Make a system to keep track of peers and their status
- 
+
 
                 # NOTE: Client sockets are not closed? 
                 # STOP FUNCTION HERE

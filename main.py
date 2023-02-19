@@ -32,11 +32,15 @@ if __name__ == '__main__':
 
         ### Connect to peers and download data from torrent ###
         peer_wire = PeerWire(metadata)
+
+        test = []
         for i in range(100): # HAX
             for index, _ in enumerate(client_addresses, start=0):
                 iprint("TEST CONNECTION:", index, color='blue')
             #TODO:
-                peer_wire.handshake(client_addresses, index)
+                peer_wire.handshake(client_addresses, index, test)
+            
+            break
 
 
         #if index >= INDEX:
