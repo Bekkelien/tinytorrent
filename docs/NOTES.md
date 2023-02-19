@@ -100,3 +100,24 @@ x00\x03\x00\x00\x00\x00\x00\x00'
     '\x05 -> 7 = Holepunch Extension'  
     '\x04 -> 7 = BEP-6 Fast Extension '
 ```
+
+
+### Peer counter has a bug:
+```console
+2023-02-19 19:14:15.422396 [INFO] Connected to UDP tracker: udp://tracker.opentrackr.org:1337/announce
+2023-02-19 19:14:15.485103 [INFO] Tracker responded with: 199 peers with valid ip/port combination of total: 200 peers
+2023-02-19 19:14:15.485103 [INFO] UDP Tracker announce accepted, re-announce interval: 1949 leechers: 14 seeders: 2579
+2023-02-19 19:14:17.530531 [WARNING] UDP tracker timeout -> No response received
+2023-02-19 19:14:17.530531 [WARNING] Connection to UDP tracker failed: udp://tracker.coppersurfer.tk:6969/announce
+2023-02-19 19:14:19.533368 [WARNING] UDP tracker timeout -> No response received
+2023-02-19 19:14:19.533368 [WARNING] Connection to UDP tracker failed: udp://tracker.leechers-paradise.org:6969/announce
+2023-02-19 19:14:19.586100 [INFO] Connected to UDP tracker: udp://tracker.openbittorrent.com:80/announce
+2023-02-19 19:14:19.617458 [INFO] Tracker responded with: 199 peers with valid ip/port combination of total: 200 peers
+2023-02-19 19:14:19.617458 [INFO] UDP Tracker announce accepted, re-announce interval: 1655 leechers: 12 seeders: 1918
+2023-02-19 19:14:20.130430 [WARNING] Tracker did not send complete response
+2023-02-19 19:14:20.130930 [WARNING] Tracker did not send incomplete response
+2023-02-19 19:14:20.130930 [WARNING] Tracker did not send interval response
+2023-02-19 19:14:20.130930 [WARNING] Tracker did not send peers response
+2023-02-19 19:14:20.130930 [INFO] HTTP Announce OK, complete: None incomplete: None interval: None peers: 0
+2023-02-19 19:14:20.130930 [INFO] Get clients resulted in: 584 Peers/Client addresses
+```

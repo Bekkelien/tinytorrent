@@ -4,6 +4,8 @@
         "dprint",
         "iprint",
         "leecher",
+        "pstr",
+        "pstrlen",
         "tinytorrent",
         "tprint",
         "wprint"

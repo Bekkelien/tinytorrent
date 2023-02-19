@@ -16,7 +16,7 @@ http:
 # MOVE-FULL handshake in config?
 
 tcp:
-  timeout: 1 # Reduce when bug is fixed
+  timeout: 2 
   handshake_buffer: 4096 # Unknown max size
   state_message_buffer: 16 # Max size should be 5 
   message_buffer: 4096 # NOTE: LARGE? Need to look into how large this can be! - remember one bit for each piece?

@@ -41,7 +41,13 @@ class Extensions:
 @dataclass
 class Clients:
     clients = json.load(open('./src/clients.json'))
+    def _peer_client_software(self, peer_id):
+        client_id = peer_id[1:3].decode("utf-8", "ignore") 
 
+        if Clients.clients.get(client_id) == None:
+            wprint("Unknown client software for peer id:", peer_id, "TODO: Implement some verification here?")
+        else:
+            iprint("Peer client:", Clients.clients[client_id])
  
 class PeerMessage():
     def __init__(self, clientSocket):
@@ -166,6 +172,7 @@ class PeerWire():
             clientSocket.connect((tuple(peer_ip)))
             clientSocket.send(message)
             response = clientSocket.recv(config['tcp']['handshake_buffer']) 
+            print("Check",response)
 
             iprint("Connected to peer", peer_ip[0], "::" , peer_ip[1])
 

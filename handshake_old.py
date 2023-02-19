@@ -70,30 +70,29 @@ async def handshake_send_recv(peer_ip, message) -> bytes:
         print(response_handshake)
 
 
-        # A bit messy to have 2 recv in one function
-        #try:
-        #    writer.write(message) # Response from server
-        #    response_bitfield = await asyncio.wait_for(reader.read(config['tcp']['handshake_buffer']), timeout=config['tcp']['timeout'])
-        #    bitfield_id = unpack('>b', response_bitfield[4:5])[0]
-#
-        #except:
-        #    bitfield_id = None
-#
-        ## TODO CLEANUP THIS
-        #if handshake_validate(response_handshake):
-        #    peer_state ='unknown'
-#
-        #    if bitfield_id == 5:
-        #        bitfield_payload = response_bitfield[5:]
-#
-        #        # Test if this is working
-        #        if len(BitArray(bitfield_payload).bin) == metadata['bitfield_length']:
-        #            if BitArray(bitfield_payload).bin.count('1') == metadata['pieces']:
-        #                peer_state = 'seeder' # Peer has 100% of data 
-        #            else:
-        #                peer_state = 'leecher' # Peer has x% of data 
-#
-        #peer_ip_handshake_ok.append([peer_ip,peer_state])
+         #A bit messy to have 2 recv in one function
+        try:
+            writer.write(message) # Response from server
+            response_bitfield = await asyncio.wait_for(reader.read(config['tcp']['handshake_buffer']), timeout=config['tcp']['timeout'])
+            bitfield_id = unpack('>b', response_bitfield[4:5])[0]
+
+        except:
+            bitfield_id = None
+
+        # TODO CLEANUP THIS
+        if handshake_validate(response_handshake):
+
+            if bitfield_id == 5:
+                bitfield_payload = response_bitfield[5:]
+
+                # Test if this is working
+                if len(BitArray(bitfield_payload).bin) == metadata['bitfield_length']:
+                    if BitArray(bitfield_payload).bin.count('1') == metadata['pieces']:
+                        print('seeder') # Peer has 100% of data 
+                    else:
+                        print('leecher') # Peer has x% of data 
+
+        peer_ip_handshake_ok.append(peer_ip)
 
 
     except asyncio.TimeoutError:
