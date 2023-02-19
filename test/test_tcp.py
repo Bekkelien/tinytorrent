@@ -1,4 +1,4 @@
-from src.protocol import PeerMessage
+from src.old.protocol import PeerMessage
 
 def test_bitfield_status(debug=True):
     """ OVERKILL x99

@@ -1,12 +1,12 @@
 import json
 import socket
-import math
+import asyncio
+
 from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass
 from bitstring import BitArray
-#from functools import lru_cache
-import asyncio
+
 # Internals
 from src.config import Config
 from src.helpers import iprint, eprint, wprint, dprint, timer
@@ -14,18 +14,71 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 # Configuration settings
 config = Config().get_config()
 
-
 @dataclass
 class Clients:
     clients = json.load(open('./src/clients.json'))
 
-class Messages():
+
+class Message(Enum):
+    choke = 0
+    unchoke = 1
+    interested = 2
+    notinterested = 3
+    have = 4
+    bitfield = 5
+    request = 6
+    piece = 7
+    cancel = 8
+    port = 9
+
+class PeerMessage():
     def __init__(self):
         pass
+    
+    # TODO: Rename function 
+    async def state_message(self, peer_ip, message, length=1) -> str:
 
-    def interested(self):
-        pass
+        # BUG: HAX for now
+        response = []
 
+        # NOTE: Currently assuming we are choked if we don't get a state message back from the peer
+        if message.value >= 0:
+
+            iprint("Sending an:", message, "message to peer")
+            message = pack('>Ib', length, message.value)
+
+            # TODO: This is used many places should be a class or generic function ?? and de dont have reader writer stored HOW TODO::
+            try:
+                writer.write(message) # Response from server
+                response = await asyncio.wait_for(reader.read(config['tcp']['state_message_buffer']), timeout=config['tcp']['timeout'])
+            
+                print(response)
+            except asyncio.TimeoutError:
+                wprint("Connection to peer timed out")
+
+            except Exception as ConnectionError:
+                wprint("Connection to peer:", ConnectionError)
+
+            if len(response) == 5: # TODO: Improve error handling
+                response = unpack('>Ib', response)
+
+            else:
+                wprint("Peer state message can't be unpacked, response not correct length")
+                return Message.choke.value # NOTE: If we get here we will fail later due to assuming unchoke
+
+            # Validation NOTE: not really a validation function just checks the response length
+            if response[0] == length:
+                #iprint("Peer response:", Message(response[1]).name) # BUG: Fail if response is not a int
+                peer_state = Message(response[1]).value
+                return peer_state # TODO:::
+
+            else:
+                wprint("Peer message failed, unknown prefix/length")
+
+        else:
+            eprint("Keep alive message not supported for this client ATM") 
+
+        return Message.choke.value  # TODO:::
 
 class Handshake: 
     def __init__(self, metadata):
@@ -140,8 +193,13 @@ class Handshake:
         # Bitfield message
         pieces = self.validate_bitfield(response)
 
+        # TODO: IMPORTANT: Interested message NEED TO BE asynchronously
+        # NOTE: How to pass client_socket/reader/writer when using asyncio
+        # message_state = await PeerMessage().state_message(peer_ip, Message.interested)  
+
         # TODO: NOTE: Currently only storing peers that respond with a valid bitfield of pieces
-        if pieces: self.peers_metadata.append([peer_ip,pieces])
+        #if pieces: self.peers_metadata.append([peer_ip, Message(message_state).name, pieces])
+        if pieces: self.peers_metadata.append([peer_ip, pieces])
 
 
     async def manager(self, peer_ips):
@@ -171,8 +229,8 @@ if __name__ == '__main__':
     from pathlib import Path
 
     PATH = Path('./src/files/')
-    file = 'gimp.torrent'
-    #file = 'pi.torrent'
+    #file = 'gimp.torrent'
+    file = 'pi.torrent'
 
     metadata = TorrentFile(PATH / file).read()
     tracker = TrackerManager(metadata)
