@@ -27,18 +27,18 @@ if __name__ == '__main__':
 
         ### Get peers IP addresses ###
         tracker = TrackerManager(metadata)
-        client_addresses = tracker.get_clients()
-        dprint(client_addresses)
+        peer_ips = tracker.get_clients()
+        dprint(peer_ips)
 
         ### Connect to peers and download data from torrent ###
         peer_wire = PeerWire(metadata)
 
         test = []
         for i in range(100): # HAX
-            for index, _ in enumerate(client_addresses, start=0):
+            for index, _ in enumerate(peer_ips, start=0):
                 iprint("TEST CONNECTION:", index, color='blue')
             #TODO:
-                peer_wire.handshake(client_addresses, index, test)
+                peer_wire.handshake(peer_ips, index, test)
             
             break
 
