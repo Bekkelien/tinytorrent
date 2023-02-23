@@ -36,7 +36,7 @@ class PeerMessage():
         pass
     
     # TODO: Rename function 
-    async def state_message(self, peer_ip, message, length=1) -> str:
+    async def state_message(self, reader, writer, message, length=1) -> str:
 
         # BUG: HAX for now
         response = []
@@ -48,11 +48,11 @@ class PeerMessage():
             message = pack('>Ib', length, message.value)
 
             # TODO: This is used many places should be a class or generic function ?? and de dont have reader writer stored HOW TODO::
+
             try:
-                writer.write(message) # Response from server
+                writer.write(message)
                 response = await asyncio.wait_for(reader.read(config['tcp']['state_message_buffer']), timeout=config['tcp']['timeout'])
             
-                print(response)
             except asyncio.TimeoutError:
                 wprint("Connection to peer timed out")
 
@@ -93,7 +93,8 @@ class Handshake:
         self.peer_id = config['client']['peer_id'].encode()
 
         # Bad place?
-        self.peers_metadata = []
+        self.peers_metadata = [] # Make a dictionary?
+        self.connections = {}
 
     # Here or outside function?
     @staticmethod
@@ -104,6 +105,11 @@ class Handshake:
             wprint("Unknown client software for peer id:", client_id, "TODO: Implement some verification here?")
         else:
             iprint("Peer client:", Clients.clients[client_id])
+
+    async def close_connection(self, ip, writer):
+        self.connections.pop(ip)
+        writer.close()
+        await writer.wait_closed()
 
     def validate(self, response) -> bool:
 
@@ -133,6 +139,22 @@ class Handshake:
             
             return False
 
+    async def bitfield(self, peer_ip, response) -> bytes:
+        # Validate handshake
+        if response:
+            if self.validate(response):
+                
+                reader, writer = self.connections[peer_ip[0]]
+                # Look for bitfield
+                try: 
+                    response = await asyncio.wait_for(reader.read(config['tcp']['handshake_buffer']), timeout=config['tcp']['timeout'])
+                    
+                    return response  
+                except Exception:
+                    wprint("Bitfield not received")
+        
+        return b''
+            
     def validate_bitfield(self, response) -> list:
 
         if len(response) < 5:
@@ -151,17 +173,22 @@ class Handshake:
             
             else:
                 wprint("Spare bitfield bytes not: 0")
-            
+
         return []
         
 
     async def message(self, peer_ip, message) -> bytes:
-            response = None
+            response = b''
 
             try:
                 reader, writer = await asyncio.wait_for(asyncio.open_connection(*peer_ip), timeout=config['tcp']['timeout'])
+
                 writer.write(message) # Response from server
                 response = await asyncio.wait_for(reader.read(config['tcp']['handshake_buffer']), timeout=config['tcp']['timeout'])
+                
+                # VALID CHECKS?
+                # Store all connections 
+                self.connections[peer_ip[0]] = (reader, writer) 
             
             except asyncio.TimeoutError:
                 wprint("Connection to peer timed out")
@@ -169,19 +196,7 @@ class Handshake:
             except Exception as ConnectionError:
                 wprint("Connection to peer:", ConnectionError)
 
-            # Validate handshake
-            if response:
-                if self.validate(response):
-
-                    # Look for bitfield
-                    try: 
-                        response = await asyncio.wait_for(reader.read(config['tcp']['handshake_buffer']), timeout=config['tcp']['timeout'])
-                        return response  
-
-                    except Exception:
-                        wprint("Bitfield not received")
-
-            return b''
+            return response
 
     async def connect(self, peer_ip, message):
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -191,15 +206,26 @@ class Handshake:
         response = await self.message(peer_ip, message)
 
         # Bitfield message
+        response = await self.bitfield(peer_ip, response)
         pieces = self.validate_bitfield(response)
 
-        # TODO: IMPORTANT: Interested message NEED TO BE asynchronously
-        # NOTE: How to pass client_socket/reader/writer when using asyncio
-        # message_state = await PeerMessage().state_message(peer_ip, Message.interested)  
+        # Filtering of connections are not good
 
+        # NOTE:: Tis is a mess to have connections outside the class in other class!
+        if pieces:
+            reader, writer = self.connections[peer_ip[0]] # HAX
+            message_state = await PeerMessage().state_message(reader, writer, Message.interested) # HAX
+            self.peers_metadata.append([peer_ip, Message(message_state).name, pieces])
+
+        # Does not close all connections so just leaving open for now
+        #else: 
+        #    if peer_ip[0] in self.connections:
+        #        reader, writer = self.connections[peer_ip[0]] # HAX
+        #        await self.close_connection(peer_ip[0], writer)
+
+        
         # TODO: NOTE: Currently only storing peers that respond with a valid bitfield of pieces
-        #if pieces: self.peers_metadata.append([peer_ip, Message(message_state).name, pieces])
-        if pieces: self.peers_metadata.append([peer_ip, pieces])
+
 
 
     async def manager(self, peer_ips):
@@ -220,17 +246,25 @@ class Handshake:
     async def run(self, peer_ips):
         await self.manager(peer_ips)
         print(self.peers_metadata)
-
+        #print(self.connections)
+        #print(len(self.connections))
 
 if __name__ == '__main__':
+
+    ##
+    # async def close_connection(self, peer_ip):
+     #   reader, writer = self.connections.pop(peer_ip)
+     #   writer.close()
+    #    await writer.wait_closed()
+
     # TESTING
     from src.manager import TrackerManager
     from src.read_torrent import TorrentFile
     from pathlib import Path
 
     PATH = Path('./src/files/')
-    #file = 'gimp.torrent'
-    file = 'pi.torrent'
+    file = 'gimp.torrent'
+    #file = 'pi.torrent'
 
     metadata = TorrentFile(PATH / file).read()
     tracker = TrackerManager(metadata)
