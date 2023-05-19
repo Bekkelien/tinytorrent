@@ -26,12 +26,15 @@ class TrackerManager():
     def _tracker_udp(self, announce, scrape=False):
         peer_ip = [] # BUGFIX a bit nasty, but returns None if not connected to udp tracker
         tracker = UdpTracker(self.metadata, announce)
-        if tracker.connect():
-            peer_ip = tracker.announce(EventUdp.started.value) # NOTE:: EVENT not yet "supported"
-            if scrape:
-                tracker.scrape()
-            tracker.close()
+        try:  # HAX for now refix
+            if tracker.connect():
+                peer_ip = tracker.announce(EventUdp.started.value) # NOTE:: EVENT not yet "supported"
+                if scrape:
+                    tracker.scrape()
+                tracker.close()
         
+        except:
+            pass
         return peer_ip
 
     def get_clients(self):
@@ -57,5 +60,5 @@ class TrackerManager():
                 self.peer_ip = [list(x) for x in set(tuple(x) for x in self.peer_ip)] # Remove duplicates
                 self.peers += len(self.peer_ip)
             
-        iprint("Get clients resulted in:", self.peers, "Peers/Client addresses")
+        iprint("BUG: NOT DISPLAYING CORRECTLY ::: Get clients resulted in:", self.peers, "Peers/Client addresses")
         return self.peer_ip

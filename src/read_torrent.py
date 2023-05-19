@@ -1,5 +1,7 @@
 import math
 import hashlib
+from bitstring import BitArray
+
 from pathlib import Path
 from bencoding import bdecode, bencode 
 
@@ -42,6 +44,10 @@ class TorrentFile():
         metadata['left'] = metadata['size']
         metadata['downloaded'] = 0
         metadata['uploaded'] = 0
+
+        # NOTE::TODO:: Added during testing :: (If keeping these add to pytest)
+        metadata['bitfield_expectation'] = BitArray([1] * (metadata['bitfield_length'] - metadata['bitfield_spare']) + [0] * metadata['bitfield_spare']).bin
+        metadata['pieces_downloaded'] = BitArray([0] * (metadata['bitfield_length'] - metadata['bitfield_spare'])).bin
         
         tprint(metadata) 
         

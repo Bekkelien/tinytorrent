@@ -4,7 +4,7 @@ import socket
 import asyncio
 import socket
 from struct import pack, unpack
-from src.old.protocol import Handshake
+from src.protocol import Handshake
 from bitstring import BitArray
 from src.config import Config
 

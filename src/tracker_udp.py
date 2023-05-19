@@ -22,7 +22,7 @@ class Action(Enum):
 
 class EventUdp(Enum):
     none = 0
-    completed = 1
+    completed = 1 
     started = 2
     stopped = 3
 
@@ -37,13 +37,13 @@ class UdpTracker:
             self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
             self.tracker_port = urlparse(self.hostname).port
         
-        # TODO: Terminate if we lost connection to network, improve solution 
+        # TODO: Terminate if we lost connection to network, improve solution or fail to get hostname / parse url
         except Exception as sockerr:
-            eprint("UDP Tracker network error:",sockerr)
-            eprint("Terminating TinyTorrent")
-            raise SystemExit
+            eprint("UDP Tracker network error:", sockerr)
+            #eprint("Terminating TinyTorrent")
+            #raise SystemExit
 
-        # Network settings UDP
+        # Network settings UDP 
         self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.clientSocket.settimeout(config['udp']['timeout'])
     
