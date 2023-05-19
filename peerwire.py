@@ -1,6 +1,8 @@
 import json
 import socket
 import asyncio
+import math 
+import time
 
 from enum import Enum
 from struct import pack, unpack
@@ -29,7 +31,7 @@ class Message(Enum):
     request = 6
     piece = 7
     cancel = 8
-    port = 9
+    port = 9 # DHT Extension
 
 class PeerMessage():
     def __init__(self):
@@ -95,6 +97,8 @@ class Handshake:
         # Bad place?
         self.peers_metadata = [] # Make a dictionary?
         self.connections = {}
+
+        self.test_33 = []
 
     # Here or outside function?
     @staticmethod
@@ -216,15 +220,8 @@ class Handshake:
             reader, writer = self.connections[peer_ip[0]] # HAX
             message_state = await PeerMessage().state_message(reader, writer, Message.interested) # HAX
             self.peers_metadata.append([peer_ip, Message(message_state).name, pieces])
-
-        # Does not close all connections so just leaving open for now
-        #else: 
-        #    if peer_ip[0] in self.connections:
-        #        reader, writer = self.connections[peer_ip[0]] # HAX
-        #        await self.close_connection(peer_ip[0], writer)
-
         
-        # TODO: NOTE: Currently only storing peers that respond with a valid bitfield of pieces
+        # Close all tcp connections
 
 
 
@@ -246,8 +243,8 @@ class Handshake:
     async def run(self, peer_ips):
         await self.manager(peer_ips)
         print(self.peers_metadata)
-        #print(self.connections)
-        #print(len(self.connections))
+
+
 
 if __name__ == '__main__':
 
@@ -270,4 +267,25 @@ if __name__ == '__main__':
     tracker = TrackerManager(metadata)
     peer_ips = tracker.get_clients()
 
-    asyncio.run(Handshake(metadata).run(peer_ips))
+    test = asyncio.run(Handshake(metadata).run(peer_ips))
+
+
+    ### Make this a class/function for testing 
+    # Testing
+#    import psutil
+#
+#    # Get all current connections
+#    connections = psutil.net_connections()
+#
+#    # Filter TCP connections
+#    tcp_connections = [conn for conn in connections if conn.status == 'ESTABLISHED' and conn.type == socket.SOCK_STREAM]
+#
+#    # Print the details of TCP connections
+#    for conn in tcp_connections:
+#        print("Local Address:", conn.laddr)
+#        print("Remote Address:", conn.raddr)
+#        print("Status:", conn.status)
+#        print("PID:", conn.pid)
+#        print("")
+#
+#
