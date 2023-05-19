@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    #files = ['pi.torrent']
+    #files = ['pi-lite.torrent']
     files = ['gimp.torrent']
 
     for file in files:
@@ -36,6 +36,10 @@ if __name__ == '__main__':
         ### Connect to peers and download data from torrent ###
         peer_wire = PeerWire(metadata)
         download = Download(metadata)
+
+        # hax
+        #print(peer_ips[::-1])
+        #peer_ips = peer_ips[::-1]
 
         data = b''
         for i in range(100): # HAX
