@@ -38,7 +38,10 @@ if __name__ == '__main__':
             for index, _ in enumerate(peer_ips, start=0):
                 iprint("TEST CONNECTION:", index, color='blue')
             #TODO:
-                peer_wire.handshake(peer_ips, index, test)
+                temp = peer_wire.handshake(peer_ips, index)
+                if temp: test.append(temp)
+
+                print(test)
             
             break
 

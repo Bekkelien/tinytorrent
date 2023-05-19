@@ -113,6 +113,7 @@ class PeerMessage():
             wprint("Bitfield message invalid")
             return b''
 
+    # TODO: Leecher satus are not working correctly 
     def bitfield_status(bitfield_payload, metadata, peer_state='unknown') -> str:
         # Assuming that the bitfield header contains bitfield, aka: message id == 5:
         
@@ -145,7 +146,7 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
 
     @timer
-    def handshake(self, peer_ip, haxhax, test) -> bool: 
+    def handshake(self, peer_ip, haxhax) -> bool: 
         """ 
         'BitTorrent protocol' 1.0
 
@@ -215,12 +216,11 @@ class PeerWire():
                 message_state = PeerMessage(clientSocket).state_message(Message.interested) # TODO Fix function allot 
 
                 # Error print just used for debugging ATM
-                test.append([peer_ip, bitfield_status, Message(message_state).name])
+                return [peer_ip, bitfield_status, Message(message_state).name]
 
-                print(test)
+            return []
                 
                 # TODO: Make a system to keep track of peers and their status
-
-
                 # NOTE: Client sockets are not closed? 
+                # TODO: Make async 
                 # STOP FUNCTION HERE
