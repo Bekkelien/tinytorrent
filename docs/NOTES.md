@@ -121,3 +121,16 @@ x00\x03\x00\x00\x00\x00\x00\x00'
 2023-02-19 19:14:20.130930 [INFO] HTTP Announce OK, complete: None incomplete: None interval: None peers: 0
 2023-02-19 19:14:20.130930 [INFO] Get clients resulted in: 584 Peers/Client addresses
 ```
+
+### Bug
+```console
+2023-05-22 23:18:53.274256 [INFO] Trying to downloaded pieces: 0 pieces left: 1012
+2023-05-22 23:18:53.274256 [INFO] Blocks in current piece: 16
+Traceback (most recent call last):
+  File "d:\code\tinytorrent\main.py", line 53, in <module>
+    block_data, flag = download.linear_test(current_peer)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\code\tinytorrent\src\download.py", line 66, in linear_test
+    current_peer.send(hax)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+```

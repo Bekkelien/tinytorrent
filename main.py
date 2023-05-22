@@ -63,7 +63,7 @@ if __name__ == '__main__':
                 
                         if flag:
                             iprint("File downloaded")
-                            with open(metadata['files'][0]['path'][0], 'wb') as file:
+                            with open("./download/" + metadata['files'][0]['path'][0], 'wb') as file:
                                 file.write(data)
                             
                             # DONE

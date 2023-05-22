@@ -3,4 +3,10 @@
 /src/__pycache__/
 
 /venv
+
+# Files
+/src/files/test.torrent
+/download
+
 example.md
+
