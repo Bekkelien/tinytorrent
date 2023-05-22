@@ -35,13 +35,15 @@ class Download:
         # INDEXING DOES NOT MAKE ANY SENS
         piece_current =  self.metadata['pieces_downloaded'].count('1')
         piece_left = self.metadata['pieces_downloaded'].count('0')
-        #piece_current = 552
-        #piece_left = 1
         dprint("Piece left:", self.metadata['pieces_downloaded'])
         iprint("Trying to downloaded pieces:", piece_current, "pieces left:", piece_left) # HAX
         
-        # BUG blocks for last piece does need to be computed to here
         blocks = math.ceil(self.metadata['piece_length'] / self.block_size) 
+        
+        # Overwrite expression for last pice
+        if piece_left == 1:
+            blocks = math.ceil((self.metadata['size']-self.metadata['piece_length']*piece_current) / self.block_size) 
+        
         iprint("Blocks in current piece:", blocks)
 
         for _ in range(piece_left): # Indexing needs to be better overall TODO:::TODO
