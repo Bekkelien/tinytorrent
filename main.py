@@ -22,7 +22,6 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    #files = ['pi-lite.torrent']
     files = ['gimp.torrent']
 
     for file in files:
@@ -35,11 +34,11 @@ if __name__ == '__main__':
 
         ### Connect to peers and download data from torrent ###
         peer_wire = PeerWire(metadata)
-        download = Download(metadata)
+        download = Download(metadata) 
 
         # hax
         #print(peer_ips[::-1])
-        #peer_ips = peer_ips[::-1]
+        #peer_ips = peer_ips[::-1] 
 
         data = b''
         for i in range(100): # HAX
@@ -49,15 +48,23 @@ if __name__ == '__main__':
                 current_peer = peer_wire.handshake(peer_ips, index)
                 if current_peer:
                     state = True
-                    # Jumps peer for each piece
+                    # Jumps peer for each piece 
                     while state: # Hax to avoid jumpig for each piece
-                        block_data, flag = download.linear_test(current_peer)
-
+                        block_data, flag = download.linear_test(current_peer) 
+                        
                         if block_data:
                             data = data + block_data
+                            size_bytes = len(data)
+                            #size_mb = size_bytes / (1024*1024)
+                            print(size_bytes)
+
                         else:
                             state = False
-
-                    if flag:
-                        with open(metadata['files'][0]['path'][0], 'wb') as file:
-                            file.write(data)
+                
+                        if flag:
+                            iprint("File downloaded")
+                            with open(metadata['files'][0]['path'][0], 'wb') as file:
+                                file.write(data)
+                            
+                            # DONE
+                            raise NotImplementedError

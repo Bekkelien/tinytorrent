@@ -219,11 +219,12 @@ class PeerWire():
                 iprint("Peer responded with:", Message(message_state).name)
 
                 # Error print just used for debugging ATM
-                if bitfield_status == 'seeder' and Message(message_state).name == Message.unchoke.name:
+                #if bitfield_status == 'seeder' and Message(message_state).name == Message.unchoke.name:
 
                 #if bitfield_status == 'seeder': # Optimistic to request data from possible choked seeder (NOTE: TESTING)
-                    dprint("TESTING seeder with current state:", Message(message_state).name)
-                    return clientSocket #, [peer_ip, bitfield_status, Message(message_state).name]
+                  #  dprint("TESTING seeder with current state:", Message(message_state).name)
+                dprint("Testing without looking for bitfield")
+                return clientSocket #, [peer_ip, bitfield_status, Message(message_state).name]
 
             return ''
                 

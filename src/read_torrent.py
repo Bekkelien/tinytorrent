@@ -33,8 +33,8 @@ class TorrentFile():
             metadata['size'] = sum(file[b'length'] for file in torrent[b'info'][b'files'])
             metadata['files'] = [{'length': path[b'length'], 'path': [path[b'path'][0].decode()]} for path in torrent[b'info'][b'files']]
         else:
-            metadata['size'] = torrent[b'info'][b'piece length'] #BUG
-            metadata['files'] = [{'length': torrent[b'info'][b'piece length'], 'path': [torrent[b'info'][b'name'].decode()]}]
+            metadata['size'] = torrent[b'info'][b'length'] 
+            metadata['files'] = [{'length': torrent[b'info'][b'length'], 'path': [torrent[b'info'][b'name'].decode()]}]
 
         metadata['name'] = torrent[b'info'][b'name'].decode()
         metadata['piece_length'] = torrent[b'info'][b'piece length']
