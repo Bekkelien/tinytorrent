@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['gimp.torrent']
+    files = ['wired-cd.torrent']
 
     for file in files:
         metadata = TorrentFile(PATH / file).read()
@@ -62,9 +62,25 @@ if __name__ == '__main__':
                             state = False
                 
                         if flag:
-                            iprint("File downloaded")
-                            with open("./download/" + metadata['files'][0]['path'][0], 'wb') as file:
-                                file.write(data)
-                            
+                            if 'files' in metadata: # Hax for now (no folders ATM)
+                                start_index = 0
+                                for index, file in enumerate(metadata['files']):
+                                    print("Saving file:", file['path'][0], "of size:", file['length'])
+                                    print(start_index,start_index+file['length'])
+                                    file_data = data[start_index:start_index+file['length']]
+                                    start_index = sum([metadata['files'][i]['length'] for i in range(index+1)])
+                                    
+                                    with open("./download/" + file['path'][0], 'wb') as file:
+                                        file.write(file_data)
+                                        
+                            else:
+                                iprint("File downloaded")
+                                with open("./download/" + metadata['files'][0]['path'][0], 'wb') as file:
+                                    file.write(data)
+
+                            # Save bin used for testing
+                            #with open("./dev/testb.bin", "wb") as file:
+                            #    file.write(data)
+
                             # DONE
                             raise NotImplementedError
