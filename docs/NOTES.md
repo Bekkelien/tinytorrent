@@ -46,6 +46,7 @@ b'TIX0314-e9e8f3i0g3d0' What is this client? -> No bitfield?
 - [ ] uTorrent Why no bitfield or “wrong” response length?
 - [ ] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
 - [ ] When return data from function refactor to always return same datatype for instance not False, None when list is expected.
+- [ ] UDP tracker works poor for some trackers :: Look into that 
 ```
 
 #### Alternative fixes

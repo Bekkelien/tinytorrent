@@ -6,45 +6,39 @@ from src.read_torrent import TorrentFile
 from src.manager import TrackerManager
 from src.protocol import PeerWire
 from src.download import Download
-from src.helpers import iprint, eprint, wprint, dprint, timer
+from src.storage import StoreDownload
+from src.helpers import iprint
 
 # Configuration settings
 config = Config().get_config()
 
-# TEST PARAMS 
-TEST = False # Only test first torrent in files list
-INDEX = 50 # Try to get data from n peers 
 
-
-#NOTE: :: :ONLY SINGLE FILES ATM
 if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
     #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['wired-cd.torrent']
+    files = ['gimp.torrent']
 
     for file in files:
         metadata = TorrentFile(PATH / file).read()
 
-        ### Get peers IP addresses ###
+        ### Get peers IP addresses ### NOTE:: We only get peers when program starts ATM
         tracker = TrackerManager(metadata)
         peer_ips = tracker.get_clients()
         #dprint(peer_ips)
 
-        ### Connect to peers and download data from torrent ###
+        ### Object for one peer_wire connection ATM
         peer_wire = PeerWire(metadata)
-        download = Download(metadata) 
 
-        # hax
-        #print(peer_ips[::-1])
-        #peer_ips = peer_ips[::-1] 
+        # Object for one download ATM
+        download = Download(metadata) 
 
         data = b''
         for i in range(100): # HAX
             for index, _ in enumerate(peer_ips, start=0):
                 iprint("TEST CONNECTION:", index, color='blue')
-            #TODO:
+            #TODO: We are doing handshake every time ATM 
                 current_peer = peer_wire.handshake(peer_ips, index)
                 if current_peer:
                     state = True
@@ -62,25 +56,6 @@ if __name__ == '__main__':
                             state = False
                 
                         if flag:
-                            if 'files' in metadata: # Hax for now (no folders ATM)
-                                start_index = 0
-                                for index, file in enumerate(metadata['files']):
-                                    print("Saving file:", file['path'][0], "of size:", file['length'])
-                                    print(start_index,start_index+file['length'])
-                                    file_data = data[start_index:start_index+file['length']]
-                                    start_index = sum([metadata['files'][i]['length'] for i in range(index+1)])
-                                    
-                                    with open("./download/" + file['path'][0], 'wb') as file:
-                                        file.write(file_data)
-                                        
-                            else:
-                                iprint("File downloaded")
-                                with open("./download/" + metadata['files'][0]['path'][0], 'wb') as file:
-                                    file.write(data)
-
-                            # Save bin used for testing
-                            #with open("./dev/testb.bin", "wb") as file:
-                            #    file.write(data)
-
-                            # DONE
+                            StoreDownload().save(data)
+    
                             raise NotImplementedError

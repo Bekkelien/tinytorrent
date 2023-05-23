@@ -34,6 +34,7 @@ class UdpTracker:
         self.peer_ip = []
 
         try:
+            # BUG: Not working well
             self.tracker_ip = socket.gethostbyname(urlparse(self.hostname).hostname) 
             self.tracker_port = urlparse(self.hostname).port
         

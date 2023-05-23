@@ -1,15 +1,5 @@
-from pathlib import Path
 
-from src.read_torrent import TorrentFile
 from src.helpers import iprint, dprint
-
-from pathlib import Path
-
-from src.read_torrent import TorrentFile
-
-PATH = Path('./src/files/')
-
-files = ['wired-cd.torrent']
 
 class StoreDownload:
     """ Stores a full torrent that are living in memory """
@@ -31,9 +21,7 @@ class StoreDownload:
             file_index_stop = file_index_start+self.metadata['files'][index]['length']
 
             #dprint(file_index_start, file_index_stop)
-            iprint("Saving:", file, "to disk of size:", file_size)
             #dprint(file_index_stop-file_index_start, file_size)
-
 
             assert (file_index_stop-file_index_start) == file_size
             file_data = data[file_index_start:file_index_start+self.metadata['files'][index]['length']]
@@ -43,13 +31,4 @@ class StoreDownload:
 
             self._to_disk(file, file_data)
 
-if __name__=='__main__':
-
-    for file in files:
-        metadata = TorrentFile(PATH / file).read()
-
-        with open("./dev/testb.bin", "rb") as file:
-            data = file.read()
-            print(len(data))
-            
-        StoreDownload(metadata).save(data)
+            iprint("Saved:", file, "to disk of size:", file_size)

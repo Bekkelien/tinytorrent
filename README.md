@@ -11,7 +11,7 @@ Run: python main.py
 
 ### Create a torrent
 ```console
-Place files in a folder within the ./create_torrent/files folder then run:
+Place files in a folder within the ./create_torrent/torrent folder then run:
 Windows: python ./create_torrent/make.py -f <foldername>
 Linux: ?
 macOS: ?
