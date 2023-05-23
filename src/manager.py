@@ -18,9 +18,7 @@ class TrackerManager():
     def _tracker_http(self, announce, scrape=False):
             tracker = TrackerConnectionHttp(self.metadata, announce)
             peer_ip = tracker.announce(EventHttp.started) # NOTE:: EVENT not yet "supported"
-            if scrape:
-                tracker.scrape()
-            
+            if scrape: tracker.scrape()
             return peer_ip
 
     def _tracker_udp(self, announce, scrape=False):
@@ -29,36 +27,37 @@ class TrackerManager():
         try:  # HAX for now refix
             if tracker.connect():
                 peer_ip = tracker.announce(EventUdp.started.value) # NOTE:: EVENT not yet "supported"
-                if scrape:
-                    tracker.scrape()
+                if scrape: tracker.scrape()
                 tracker.close()
-        
+
         except:
             pass
         return peer_ip
 
     def get_clients(self):
-        # New version fetches all clients from the peers, NOTE: Reduce client amount should not be here because this is fast!
         for announce in self.metadata['announce_list']:
 
+            # TODO
             if 'ipv6' in announce:
                 wprint("IPv6 is currently not supported") 
                 peer_ip = []
 
+            # Tracker is UDP
             elif announce.startswith('udp'):
                 peer_ip = self._tracker_udp(announce)
             
+            # Tracker is HTTPS
             elif any(announce.startswith(x) for x in ['http', 'https']):
                 peer_ip = self._tracker_http(announce)
             
+            # Unknown tracker protocol for tinytorrent (wss++)
             else:
-                wprint("Unknown tracker protocol", announce[:announce.rfind(':')], "for tracker:", announce) # Typical wss or so
+                wprint("Tracker protocol:", announce[:announce.rfind(':')], "for tracker:", announce, "not supported") 
                 peer_ip = []
 
             if peer_ip:
                 self.peer_ip = self.peer_ip + peer_ip
                 self.peer_ip = [list(x) for x in set(tuple(x) for x in self.peer_ip)] # Remove duplicates
-                self.peers += len(self.peer_ip)
-            
-        iprint("BUG: NOT DISPLAYING CORRECTLY ::: Get clients resulted in:", self.peers, "Peers/Client addresses")
+    
+        iprint("Get clients resulted in:", len(self.peer_ip), "Peers/Client addresses")
         return self.peer_ip

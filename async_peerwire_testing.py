@@ -242,7 +242,7 @@ class Handshake:
 
     async def run(self, peer_ips):
         await self.manager(peer_ips)
-        print(self.peers_metadata)
+        #print(self.peers_metadata)
 
 
 
@@ -267,7 +267,7 @@ if __name__ == '__main__':
     tracker = TrackerManager(metadata)
     peer_ips = tracker.get_clients()
 
-    test = asyncio.run(Handshake(metadata).run(peer_ips))
+    #test = asyncio.run(Handshake(metadata).run(peer_ips))
 
 
     ### Make this a class/function for testing 

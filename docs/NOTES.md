@@ -44,7 +44,6 @@ b'TIX0314-e9e8f3i0g3d0' What is this client? -> No bitfield?
 - [ ] Qbittorrent times out every time? What are wrong here - after/during handshake Improve handshake? Try to pretend to be a known client not tiny torrent client
 - [ ] Invalid message should be warning not error msg
 - [ ] uTorrent Why no bitfield or “wrong” response length?
-- [ ] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
 - [ ] When return data from function refactor to always return same datatype for instance not False, None when list is expected.
 - [ ] UDP tracker works poor for some trackers :: Look into that 
 ```
@@ -72,6 +71,8 @@ if b'files' in data[b'info']: # Can fail if filename is files, almost impossible
 - [x] tracker_udp -> Need cleaning up, testing and error handling
 - [x] BUG:
 In PeerWire: while loop after handshake 
+- [x] Don’t get any connection to “leachers” or not with bitfield but that might be ok.
+
 
 if len(response) >=5:
 	infinite loop

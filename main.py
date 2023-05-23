@@ -56,6 +56,6 @@ if __name__ == '__main__':
                             state = False
                 
                         if flag:
-                            StoreDownload().save(data)
+                            StoreDownload(metadata).save(data)
     
                             raise NotImplementedError
