@@ -55,19 +55,23 @@ class TrackerConnectionHttp:
     def _http_parse_response(self, response):
         """ Parse tracker response if tracker responds to the announce request"""
 
-        temp = bdecode(response)
+        try:
+            temp = bdecode(response)
 
-        # Parse the tracker OrderedDict response
-        self.complete = temp[b'complete'] if b'complete' in temp else wprint("Tracker did not send complete response")
-        self.incomplete = temp[b'incomplete'] if b'incomplete' in temp else wprint("Tracker did not send incomplete response")
-        self.interval = temp[b'interval'] if b'interval' in temp else wprint("Tracker did not send interval response")
-        self.peers = temp[b'peers'] if b'peers' in temp else wprint("Tracker did not send peers response")
-        
-        peer_ip_addresses = parse_tracker_peers_ip(self.peers)
-        iprint("HTTP Announce OK, complete:", self.complete, "incomplete:", self.incomplete, "interval:", self.interval, "peers:", len(peer_ip_addresses))
+            # Parse the tracker OrderedDict response
+            self.complete = temp[b'complete'] if b'complete' in temp else wprint("Tracker did not send complete response")
+            self.incomplete = temp[b'incomplete'] if b'incomplete' in temp else wprint("Tracker did not send incomplete response")
+            self.interval = temp[b'interval'] if b'interval' in temp else wprint("Tracker did not send interval response")
+            self.peers = temp[b'peers'] if b'peers' in temp else wprint("Tracker did not send peers response")
+            
+            peer_ip_addresses = parse_tracker_peers_ip(self.peers)
+            iprint("HTTP Announce OK, complete:", self.complete, "incomplete:", self.incomplete, "interval:", self.interval, "peers:", len(peer_ip_addresses))
 
-        return peer_ip_addresses
-    
+            return peer_ip_addresses
+
+        except Exception as e: #TODO::
+            wprint("Cant parse http tracker response:", e)
+
     # NOTE: This function is not implemented fully yet
     def scrape(self): 
 
