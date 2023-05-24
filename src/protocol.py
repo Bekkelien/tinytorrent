@@ -233,3 +233,17 @@ class PeerWire():
                 # NOTE: Client sockets are not closed? 
                 # TODO: Make async 
                 # STOP FUNCTION HERE
+
+
+
+class PeerManager:
+    def __init__(self) -> None:
+        pass
+
+    def rank_peers(peers):
+        """ Simple raking function for testing """
+        seeders = [i for i in peers if i[2] == 'seeder']
+        seeders = sorted(seeders, key=lambda x: x[3], reverse=True)
+        leechers = [i for i in peers if i[2] == 'leecher']
+        leechers = sorted(leechers, key=lambda x: x[3], reverse=True)
+        return seeders + leechers

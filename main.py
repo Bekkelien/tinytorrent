@@ -4,7 +4,7 @@ from pathlib import Path
 from src.config import Config
 from src.read_torrent import TorrentFile
 from src.manager import TrackerManager
-from src.protocol import PeerWire
+from src.protocol import PeerWire, PeerManager
 from src.download import Download
 from src.storage import StoreDownload
 from src.helpers import iprint, dprint, pprint
@@ -44,7 +44,9 @@ if __name__ == '__main__':
                 if peer:
                     peers.append(peer)
             
-            # Build a sorter here
+            # Move out of here at some points
+            peers = PeerManager.rank_peers(peers)
+
             pprint(peers)
 
             for peer in peers: #(Only one iteration for testing now)
