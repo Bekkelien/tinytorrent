@@ -33,6 +33,7 @@ class Download:
     # NOTE:: just for one socket ATM
     def linear_test(self, current_peer): # Just for seeding for now
         # INDEXING DOES NOT MAKE ANY SENS
+        # WE are not handling messages 
         piece_current =  self.metadata['pieces_downloaded'].count('1')
         piece_left = self.metadata['pieces_downloaded'].count('0')
         dprint("Piece left:", self.metadata['pieces_downloaded'])
@@ -55,7 +56,7 @@ class Download:
                 if piece_left == 1 and blocks == block + 1: # Indexing is a bit messy with 0/1 indexing  # TODO IMPROVE THIS
                     dprint("Last piece HAX, piece number:", piece_current)
                   
-                    last_block_size =(self.metadata['size']%self.metadata['piece_length'])%self.block_size #Make block size "global"
+                    last_block_size =(self.metadata['size']%self.metadata['piece_length']) % self.block_size #Make block size "global"
                     dprint("Last piece size test:", last_block_size)
 
                     hax = pack('>IBIII', 13, 6, piece_current, block*self.block_size, last_block_size) 
@@ -64,20 +65,32 @@ class Download:
                     #print(unpack('>IBIII',hax))
                 
                 try:
-                    current_peer.send(hax)
-                    # ADD Handler within each piece 
-                    # Dumbest shit ever:: just wait to response is hit
-                    time.sleep(factor) # NOTE:HAX
-                    response = current_peer.recv(24576) # Find a good buffer size
-                    #print(response)
-                    msg = unpack('>IBII',response[0:13])
-                    print(msg)
-                    print(msg[0])
-                    print(len(response[13:]))
-                    block_data = block_data + response[13:] 
-                    #print(response[17:])
+                    looking_hax = True
+                    timeout_hax = 0
+                    while looking_hax:
+                        current_peer.send(hax)
+                        # ADD Handler within each piece 
+                        # Dumbest shit ever:: just wait to response is hit
+                        time.sleep(factor) # NOTE:HAX
+                        response = current_peer.recv(24576) # Find a good buffer size
+                        #print(response)
+                        msg = unpack('>IBII',response[0:13])
+                        if msg[1] == 7:
+                            iprint(msg)
+                            block_data = block_data + response[13:] 
+                            looking_hax = False
+                            
+                        else: # If not a piece message look again -> HAX ATM as we are not handling incoming messages NOTE::TODO
+                            wprint("Unknown message from peer:", msg)
+                            looking_hax = True
+                            timeout_hax += 0
+                            if timeout_hax >= 5:
+                                break
+
                 except Exception as e:
+                    # Make a breaker if a block is bad 
                     eprint("Error downloading piece TESTING:", e)
+                    break
                 
             hash = hashlib.sha1(block_data).digest()
             dprint("Hash of piece:", hash)
