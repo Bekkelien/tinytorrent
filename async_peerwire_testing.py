@@ -159,27 +159,37 @@ class Handshake:
         
         return b''
             
-    def validate_bitfield(self, response) -> list:
+    #def validate_bitfield(self, response) -> list:
+#
+    #    if len(response) < 5:
+    #        return []
+    #    
+    #    bitfield_payload = response[5:]
+    #    bitfield_payload_big_endian = BitArray(bitfield_payload).bin
+#
+    #    # Check bitfield length
+    #    if len(BitArray(bitfield_payload).bin) == metadata['bitfield_length']:
+    #        # Check if spare bitfield are zero
+    #        if bitfield_payload_big_endian[-self.metadata['bitfield_spare']:].count('0') == self.metadata['bitfield_spare']:
+    #            
+    #            iprint("Bitfield accepted")
+    #            return bitfield_payload_big_endian
+    #        
+    #        else:
+    #            wprint("Spare bitfield bytes not: 0")
+#
+    #    return []
 
-        if len(response) < 5:
-            return []
+
+    def bitfield_check(self, bitfield_payload) -> str:
+        # TODO: seeder leacher is not really 100% as only ok bitfield awards a peer as a seeder
+        dprint("Bitfield payload from peer:", BitArray(bitfield_payload).bin)
         
-        bitfield_payload = response[5:]
-        bitfield_payload_big_endian = BitArray(bitfield_payload).bin
-
-        # Check bitfield length
-        if len(BitArray(bitfield_payload).bin) == metadata['bitfield_length']:
-            # Check if spare bitfield are zero
-            if bitfield_payload_big_endian[-self.metadata['bitfield_spare']:].count('0') == self.metadata['bitfield_spare']:
-                
-                iprint("Bitfield accepted")
-                return bitfield_payload_big_endian
-            
-            else:
-                wprint("Spare bitfield bytes not: 0")
-
-        return []
+        if bitfield_payload:
+            if self.metadata['bitfield'] == BitArray(bitfield_payload).bin:
+                return 'seeder' # Peer has 100% of data 
         
+        return 'leecher' # Peer has x % of data        
 
     async def message(self, peer_ip, message) -> bytes:
             response = b''
@@ -210,18 +220,25 @@ class Handshake:
         response = await self.message(peer_ip, message)
 
         # Bitfield message
-        response = await self.bitfield(peer_ip, response)
-        pieces = self.validate_bitfield(response)
+        hax = await self.bitfield(peer_ip, response)  # Hax replace with new linear solution
+        #pieces = self.validate_bitfield(response)
+        peer_data = self.bitfield_check(hax[5:]) # Hax replace with new linear solution 
 
         # Filtering of connections are not good
 
         # NOTE:: Tis is a mess to have connections outside the class in other class!
-        if pieces:
+        #if pieces:
+
+        # UBERHAX
+        try:
             reader, writer = self.connections[peer_ip[0]] # HAX
             message_state = await PeerMessage().state_message(reader, writer, Message.interested) # HAX
-            self.peers_metadata.append([peer_ip, Message(message_state).name, pieces])
-        
-        # Close all tcp connections
+            peer = [client_socket, peer_ip, peer_data, Message(message_state).name]
+            self.peers_metadata.append(peer)
+        except Exception as e:
+            eprint("FIX THIS ")
+    
+    # Close all tcp connections
 
 
 
@@ -242,7 +259,7 @@ class Handshake:
 
     async def run(self, peer_ips):
         await self.manager(peer_ips)
-        #print(self.peers_metadata)
+        return self.peers_metadata
 
 
 
@@ -267,8 +284,8 @@ if __name__ == '__main__':
     tracker = TrackerManager(metadata)
     peer_ips = tracker.get_clients()
 
-    #test = asyncio.run(Handshake(metadata).run(peer_ips))
-
+    test = asyncio.run(Handshake(metadata).run(peer_ips))
+    print(test)
 
     ### Make this a class/function for testing 
     # Testing

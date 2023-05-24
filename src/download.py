@@ -1,122 +1,130 @@
-# TESTING 
-
 import time
 import math
-import socket
-
 import hashlib
 
 from struct import pack, unpack
 
-
 # Internals
 from src.config import Config
-from src.helpers import iprint, eprint, wprint, dprint, timer
+from src.read_torrent import TorrentFile
+from src.helpers import iprint, eprint, wprint, dprint
+from src.protocol import Message
 
 # Configuration settings
 config = Config().get_config()
 
-from src.read_torrent import TorrentFile
+FACTOR = 0.5 # Dumb hax 
+BLOCK_SIZE = 2**14
 
-
-# Used for testing
-multitorrent = './test/torrents/multi.torrent'
-singeltorrent = './test/torrents/single.torrent'
-metadata = TorrentFile(singeltorrent).read()
-
-
+# NOTE: Current index and rest pieces are a bit messy 
 class Download:
     def __init__(self, metadata) -> None:
         self.metadata = metadata
-        self.block_size = 2**14
+        self.current_piece_index = self.metadata['pieces_downloaded'].count('1')
+        self.remaining_pieces = self.metadata['pieces_downloaded'].count('0')
+        self.block_size_last =  (metadata['size']%metadata['piece_length']) % BLOCK_SIZE 
 
-    # NOTE:: just for one socket ATM
-    def linear_test(self, current_peer): # Just for seeding for now
-        # INDEXING DOES NOT MAKE ANY SENS
-        # WE are not handling messages 
-        piece_current =  self.metadata['pieces_downloaded'].count('1')
-        piece_left = self.metadata['pieces_downloaded'].count('0')
-        dprint("Piece left:", self.metadata['pieces_downloaded'])
-        iprint("Trying to downloaded pieces:", piece_current, "pieces left:", piece_left) # HAX
+        # Downloaded data:
+        self.factor = FACTOR # TODO: current hax to wait for data 
+
+    def _linear_piece_manager(self) -> int:
+        self.current_piece_index  = self.metadata['pieces_downloaded'].count('1')
+        self.remaining_pieces = self.metadata['pieces_downloaded'].count('0')
         
-        blocks = math.ceil(self.metadata['piece_length'] / self.block_size) 
+        blocks = math.ceil(self.metadata['piece_length'] / BLOCK_SIZE) 
         
         # Overwrite expression for last pice
-        if piece_left == 1:
-            blocks = math.ceil((self.metadata['size']-self.metadata['piece_length']*piece_current) / self.block_size) 
+        if self.remaining_pieces == 1:
+            blocks = math.ceil((self.metadata['size']-self.metadata['piece_length']*self.current_piece_index ) / BLOCK_SIZE) 
         
-        iprint("Blocks in current piece:", blocks)
+        iprint("Trying to downloaded pieces:", self.current_piece_index , "blocks:", blocks, "remaining pieces:", self.remaining_pieces) # HAX
+        return blocks
 
-        for _ in range(piece_left): # Indexing needs to be better overall TODO:::TODO
-            factor = 1
-            block_data = b''
-            flag = False
-            for block in range(blocks):
-                # pice index stuff is bad as always 
-                if piece_left == 1 and blocks == block + 1: # Indexing is a bit messy with 0/1 indexing  # TODO IMPROVE THIS
-                    dprint("Last piece HAX, piece number:", piece_current)
-                  
-                    last_block_size =(self.metadata['size']%self.metadata['piece_length']) % self.block_size #Make block size "global"
-                    dprint("Last piece size test:", last_block_size)
 
-                    hax = pack('>IBIII', 13, 6, piece_current, block*self.block_size, last_block_size) 
-                else:
-                    hax = pack('>IBIII', 13, 6, piece_current, block*self.block_size, self.block_size)
-                    #print(unpack('>IBIII',hax))
-                
-                try:
-                    looking_hax = True
-                    timeout_hax = 0
-                    while looking_hax:
-                        current_peer.send(hax)
-                        # ADD Handler within each piece 
-                        # Dumbest shit ever:: just wait to response is hit
-                        time.sleep(factor) # NOTE:HAX
-                        response = current_peer.recv(24576) # Find a good buffer size
-                        #print(response)
-                        msg = unpack('>IBII',response[0:13])
-                        if msg[1] == 7:
-                            iprint(msg)
-                            block_data = block_data + response[13:] 
-                            looking_hax = False
-                            
-                        else: # If not a piece message look again -> HAX ATM as we are not handling incoming messages NOTE::TODO
-                            wprint("Unknown message from peer:", msg)
-                            looking_hax = True
-                            timeout_hax += 0
-                            if timeout_hax >= 5:
-                                break
+    def _piece_validation(self, piece_data) -> bytes:
+        piece_hash = hashlib.sha1(piece_data).digest()
 
-                except Exception as e:
-                    # Make a breaker if a block is bad 
-                    eprint("Error downloading piece TESTING:", e)
-                    break
-                
-            hash = hashlib.sha1(block_data).digest()
-            dprint("Hash of piece:", hash)
-            dprint("Expected hash of piece:", self.metadata['pieces'][(piece_current*20):20 +(piece_current*20)])
+        if piece_hash == self.metadata['pieces'][(self.current_piece_index*20):20 +(self.current_piece_index*20)]: # Make this easier to index?
+            iprint("Piece:", self.current_piece_index, "hash is verified" , color="green")
 
-            if hash == self.metadata['pieces'][(piece_current*20):20 +(piece_current*20)]: # Make this easier to index?
-                iprint("Piece:", piece_current, "downloaded success" , color="green")
-                
+            # TODO: Update metadata Downloaded well that is hard without storing it to file (NOTE: make metadata a file?), left also download speed for this piece here
 
-                if factor > 0.2: factor = factor - 0.1
+            if self.factor > 0.2: self.factor = self.factor - 0.1 # NOTE:: The most dumb speed adjuster for downloading in the history of downloading (how to know when peer responds with data?)
 
-                # NOTE: this was a bad idea since strings in python are immutable but lets go with it for now
-                self.metadata['pieces_downloaded'] = self.metadata['pieces_downloaded'][:piece_current] + '1' + self.metadata['pieces_downloaded'][piece_current + 1:]
-                
-                if piece_current == self.metadata['pieces_count'] -1:  # Make index system better
-                    flag = True
+            # NOTE: this was a bad idea since strings in python are immutable but lets go with it for now
+            self.metadata['pieces_downloaded'] = self.metadata['pieces_downloaded'][:self.current_piece_index] + '1' + self.metadata['pieces_downloaded'][self.current_piece_index + 1:]
 
-                print(len(block_data), flag)
-                return block_data, flag
+            return piece_data
+    
+        else: 
+            wprint("Piece:", self.current_piece_index, "hash verification failed")
+            self.factor = FACTOR
+            iprint("Restoring factor back to:", FACTOR)
+            return  b''        
+
+    def _piece_last_check(self):
+        if self.current_piece_index == self.metadata['pieces_count'] - 1:  
+            return True
+    
+        return False
+
+
+    def linear_download_piece(self, current_peer): # Bytes,bool how to do two return stuff thing
+        blocks = self._linear_piece_manager() # Piece to download
+        dprint(current_peer)
+        
+        piece_data = b''
+        timeout_hax = 0
+        piece_start_time = time.time()
+        for block in range(blocks):
+            if self.remaining_pieces == 1 and blocks == block + 1:
+                print("Trying to download the last block:", blocks, "in piece:", self.current_piece_index, "with a size of:", self.block_size_last)
+                request_message = pack('>IBIII', 13, Message.request.value, self.current_piece_index, block*BLOCK_SIZE, self.block_size_last) 
+            else:
+                request_message = pack('>IBIII', 13, Message.request.value, self.current_piece_index, block*BLOCK_SIZE, BLOCK_SIZE)
             
-            else: 
-                wprint("Piece:", piece_current, "download did not match the hash")
-                block_data = b''
-                print(len(block_data), flag)
-                return block_data, flag           
+            try:
+                looking_hax = True
+                while looking_hax:
+                    current_peer.send(request_message)
+                    time.sleep(self.factor) # NOTE:HAX
+                    response = current_peer.recv(24576) # Find a good buffer size
+                    message = unpack('>IBII', response[0:13]) # Unpacking transaction "Header"
+
+                    if message[0] == BLOCK_SIZE + 9 and message[1] == Message.piece.value and message[2] == self.current_piece_index:
+                        #if message[3] == self.block_size_last or message[3] == BLOCK_SIZE: #TODO later
+                        iprint("Peer response:", message, "adding data to piece")
+                        piece_data = piece_data + response[13:] 
+                        looking_hax = False
+                        #else:
+                        #    wprint("Payload size in this block is invalid cant download piece")
+                        #    looking_hax = False
+                        #    break
+                        
+                    else: # If not a piece message look again -> HAX ATM as we are not handling incoming messages NOTE::TODO
+                        wprint("Unknown message from peer:", message)
+                        looking_hax = True
+                        timeout_hax += 1
+                        if timeout_hax >= 2:
+                            wprint("Since we do not handle incoming messages from peers timeout has ocurred")
+                            return b'', False
+
+            except Exception as e:
+                eprint("Cant download piece:", e)
+                return b'', False
+        
+        piece_data = self._piece_validation(piece_data)
+        flag = self._piece_last_check()
+
+        if piece_data and not flag:
+            piece_download_rate = (time.time() - piece_start_time) / ((blocks * BLOCK_SIZE) / 1024 / 1024)
+            iprint("Piece download rate:", piece_download_rate, "MB/s")
+
+        return piece_data, flag
 
 
 if __name__ == '__main__':
-    pass
+    # Used for testing
+    multitorrent = './test/torrents/multi.torrent'
+    singeltorrent = './test/torrents/single.torrent'
+    metadata = TorrentFile(singeltorrent).read()

@@ -34,19 +34,29 @@ if __name__ == '__main__':
         download = Download(metadata) 
 
         data = b''
-        peers = []
-        # Create a func from this
-        for i in range(1000): # HAX
-            for index, _ in enumerate(peer_ips, start=0):
-                iprint("TEST CONNECTION:", index, color='blue')
-            #TODO: We are doing handshake every time ATM 
-                peer = peer_wire.handshake(peer_ips, index)
-                if peer:
-                    peers.append(peer)
+
+        ASYNC = False # Does not connect properly to peers it seems and more bugs and stuff
+        if ASYNC:
+            import asyncio
+            from async_peerwire_testing import Handshake
+        while True:
+            if ASYNC: peers = asyncio.run(Handshake(metadata).run(peer_ips))
+            else:
+                peers = []
+                # Create a func from this
+                for index, _ in enumerate(peer_ips, start=0):
+                    iprint("TEST CONNECTION:", index, color='blue')
+                #TODO: We are doing handshake every time ATM 
+                    peer = peer_wire.handshake(peer_ips, index)
+                    if peer:
+                        peers.append(peer)
+                        if len(peers) == 10: 
+                            break
             
             # Move out of here at some points
             peers = PeerManager.rank_peers(peers)
 
+            # END LINEAR
             pprint(peers)
 
             for peer in peers: #(Only one iteration for testing now)
@@ -56,19 +66,16 @@ if __name__ == '__main__':
                 state = True
                 # Jumps peer for each piece 
                 while state: # Hax to avoid jumpig for each piece
-                    block_data, flag = download.linear_test(current_peer) 
+                    piece_data, flag = download.linear_download_piece(current_peer) 
                     
-                    if block_data:
-                        data = data + block_data
-                        size_bytes = len(data)
-                        #size_mb = size_bytes / (1024*1024)
-                        print(size_bytes)
+                    if piece_data:
+                        data = data + piece_data
 
                     else:
                         state = False
             
                     if flag:
                         StoreDownload(metadata).save(data)
-
+                        iprint("Download success, what a time to be alive ")
                         raise NotImplementedError
 
