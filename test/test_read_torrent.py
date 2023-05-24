@@ -20,7 +20,7 @@ def test_torrentfile_read():
     assert metadata['downloaded'] == 0
     assert metadata['uploaded'] == 0
     assert metadata['pieces'] == b'+\xb1\xedvB\xa5\x15)\xa6)C\x0eP\x11\xe2\xff\xcf\ng\xe5'
-    assert metadata['bitfield_expectation'] == '10000000'
+    assert metadata['bitfield'] == '10000000'
     assert metadata['pieces_downloaded'] == '0'
 
     metadata = TorrentFile(singeltorrent).read()
@@ -38,5 +38,5 @@ def test_torrentfile_read():
     assert metadata['downloaded'] == 0
     assert metadata['uploaded'] == 0
     assert metadata['pieces'] == b'o\xaa\xd3\xe2\x1a0}n\xe4\xcb\xd1\x00lr\xd6\x08\xe1\xb4\xa6\x85'    
-    assert metadata['bitfield_expectation'] == '10000000'
+    assert metadata['bitfield'] == '10000000'
     assert metadata['pieces_downloaded'] == '0'    

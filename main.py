@@ -12,7 +12,6 @@ from src.helpers import iprint
 # Configuration settings
 config = Config().get_config()
 
-
 if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
@@ -22,7 +21,7 @@ if __name__ == '__main__':
 
     for file in files:
         metadata = TorrentFile(PATH / file).read()
-
+        
         ### Get peers IP addresses ### NOTE:: We only get peers when program starts ATM
         tracker = TrackerManager(metadata)
         peer_ips = tracker.get_clients()
@@ -35,7 +34,7 @@ if __name__ == '__main__':
         download = Download(metadata) 
 
         data = b''
-        for i in range(100): # HAX
+        for i in range(10000): # HAX
             for index, _ in enumerate(peer_ips, start=0):
                 iprint("TEST CONNECTION:", index, color='blue')
             #TODO: We are doing handshake every time ATM 

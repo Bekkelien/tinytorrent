@@ -1,8 +1,8 @@
 import math
 import hashlib
-from bitstring import BitArray
 
 from pathlib import Path
+from bitstring import BitArray
 from bencoding import bdecode, bencode 
 
 # Internals
@@ -15,7 +15,7 @@ class TorrentFile():
         self.file_path = Path(file)
 
     def read(self) -> dict:
-        """ Read a torrent file and return a dictionary of metadata """
+        """ Read a new torrent file and return a dictionary of metadata """
 
         metadata = {}
 
@@ -37,6 +37,7 @@ class TorrentFile():
             metadata['files'] = [{'length': torrent[b'info'][b'length'], 'path': [torrent[b'info'][b'name'].decode()]}]
 
         metadata['name'] = torrent[b'info'][b'name'].decode()
+        metadata['pieces'] = torrent[b'info'][b'pieces']  
         metadata['piece_length'] = torrent[b'info'][b'piece length']
         metadata['pieces_count'] = int(len(torrent[b'info'][b'pieces'])/BLOCK_SIZE)
         metadata['bitfield_spare'] = 8 * math.ceil(metadata['pieces_count']/8) - metadata['pieces_count']
@@ -45,15 +46,9 @@ class TorrentFile():
         metadata['downloaded'] = 0
         metadata['uploaded'] = 0
 
-        # NOTE::TODO:: Added during testing :: (If keeping these add to pytest)
-        metadata['bitfield_expectation'] = BitArray([1] * (metadata['bitfield_length'] - metadata['bitfield_spare']) + [0] * metadata['bitfield_spare']).bin
         metadata['pieces_downloaded'] = BitArray([0] * (metadata['bitfield_length'] - metadata['bitfield_spare'])).bin
-        
+        metadata['bitfield'] = BitArray([1] * (metadata['bitfield_length'] - metadata['bitfield_spare']) + [0] * metadata['bitfield_spare']).bin
         tprint(metadata) 
-        
-        # Do not print the info hash and pieces hash
-        metadata['info_hash'] = metadata['info_hash']
-        metadata['pieces'] = torrent[b'info'][b'pieces']  
  
         return metadata
         

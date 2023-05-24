@@ -122,7 +122,7 @@ class PeerMessage():
         dprint("Bitfield payload from peer:", BitArray(bitfield_payload).bin)
         
         if bitfield_payload:
-            if metadata['bitfield_expectation'] == BitArray(bitfield_payload).bin:
+            if metadata['bitfield'] == BitArray(bitfield_payload).bin:
                 return 'seeder' # Peer has 100% of data 
         
         return 'leecher' # Peer has x % of data 

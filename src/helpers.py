@@ -48,13 +48,28 @@ def wprint(*args, color = 'magenta'):
 
 def tprint(metadata): 
     """ Takes a dict from a torrent file metadata and formate it for tinytorrent style prints"""
+    
     for key, value in metadata.items():
         if 'files' in key:
-            for file in metadata['files']:
-                print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {file}")
+            for index, file in enumerate(metadata['files']):
+                print(f"{datetime.now()} [TORRENT] File {index}: {file}")
 
-        elif 'announce_list' in key:
+        elif 'announce_list' == key:
             for idx, _ in enumerate(list(metadata['announce_list'])):
                 print(f"{datetime.now()} [TORRENT] Tracker {idx}: {list(metadata['announce_list'])[idx]}")
+
+        elif 'bitfield' == key:
+            if len(metadata['bitfield']) <= 20: print(f"{datetime.now()} [TORRENT] Bitfield: {metadata['bitfield']}")
+            else: print(f"{datetime.now()} [TORRENT] Bitfield: {metadata['bitfield'][0:8]} ..... {metadata['bitfield'][-8:]}")
+
+        elif 'pieces_downloaded' == key:
+            if len(metadata['pieces_downloaded']) <= 20: print(f"{datetime.now()} [TORRENT] Pieces downloaded: {metadata['pieces_downloaded']}")
+            else: print(f"{datetime.now()} [TORRENT] Pieces downloaded: {metadata['pieces_downloaded'][0:8]} ..... {metadata['pieces_downloaded'][-8:]}")
+
+        elif 'pieces' == key:
+            pieces = int(len(metadata['pieces']) / 20)
+            if pieces < 1 : eprint("Info hash error unknown length:", pieces)
+            else: print(f"{datetime.now()} [TORRENT] Pieces: {pieces} with hash of 20 bytes, first hash: {metadata['pieces'][0:20]}")
+
         else:
             print(f"{datetime.now()} [TORRENT] {key.capitalize()}: {value}")
