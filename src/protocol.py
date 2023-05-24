@@ -61,10 +61,9 @@ class PeerMessage():
 
             # Send message to peer 
             message = pack('>Ib', length, message.value)
-            self.clientSocket.send(message)
-
             # Response from peer TODO:
             try:
+                self.clientSocket.send(message)
                 response = self.clientSocket.recv(config['tcp']['state_message_buffer']) 
             except:
                 return Message.choke.value  # NOTE:
