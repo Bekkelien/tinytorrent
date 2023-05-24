@@ -117,8 +117,8 @@ class PeerMessage():
             wprint("Bitfield message invalid")
             return b''
 
-    def bitfield_status(bitfield_payload, metadata) -> str:
-
+    def bitfield_check(bitfield_payload, metadata) -> str:
+        # TODO: seeder leacher is not really 100% as only ok bitfield awards a peer as a seeder
         dprint("Bitfield payload from peer:", BitArray(bitfield_payload).bin)
         
         if bitfield_payload:
@@ -148,7 +148,7 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
 
     @timer
-    def handshake(self, peer_ip, haxhax): 
+    def handshake(self, peer_ip, haxhax) -> list: 
         """ 
         'BitTorrent protocol' 1.0
 
@@ -166,22 +166,22 @@ class PeerWire():
                                         config['client']['peer_id'].encode())
         
         # Network setup TCP socket
-        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        clientSocket.settimeout(config['tcp']['timeout'])
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.settimeout(config['tcp']['timeout'])
 
         try:  
             iprint("Connecting to peer:", peer_ip[0], "::" , peer_ip[1])
 
-            clientSocket.connect((tuple(peer_ip)))
-            clientSocket.send(message)
-            response = clientSocket.recv(config['tcp']['handshake_buffer']) 
+            client_socket.connect((tuple(peer_ip)))
+            client_socket.send(message)
+            response = client_socket.recv(config['tcp']['handshake_buffer']) 
 
             iprint("Connected to peer", peer_ip[0], "::" , peer_ip[1])
 
         
         except Exception as e: # TODO Improve this
             dprint("Connect to peer failed with exception:", e)
-            return False
+            return []
         
         # TODO :: Create a function for this!
 
@@ -201,7 +201,7 @@ class PeerWire():
             
             if (Handshake.pstrlen + Handshake.pstr) != handshake_pstrlen + handshake_pstr:
                 wprint("Handshake response failed unknown protocol:", handshake_pstr.decode("utf-8", "ignore"))
-                return False
+                return []
 
             # Validate
             if self.metadata['info_hash'] == handshake_info_hash:
@@ -210,11 +210,11 @@ class PeerWire():
                 self._peer_client_software(handshake_client_id)
 
                 # Check for bitfield response
-                bitfield_payload = PeerMessage.bitfield(clientSocket)
-                bitfield_status = PeerMessage.bitfield_status(bitfield_payload, self.metadata)
+                bitfield_payload = PeerMessage.bitfield(client_socket)
+                peer_data = PeerMessage.bitfield_check(bitfield_payload, self.metadata)
 
                 # Send interested message to try to unchoke the peer
-                message_state = PeerMessage(clientSocket).state_message(Message.interested) # TODO Fix function allot 
+                message_state = PeerMessage(client_socket).state_message(Message.interested) # TODO Fix function allot 
 
                 iprint("Peer responded with:", Message(message_state).name)
 
@@ -224,9 +224,10 @@ class PeerWire():
                 #if bitfield_status == 'seeder': # Optimistic to request data from possible choked seeder (NOTE: TESTING)
                   #  dprint("TESTING seeder with current state:", Message(message_state).name)
                 dprint("Testing without looking for bitfield")
-                return clientSocket #, [peer_ip, bitfield_status, Message(message_state).name]
+                peer = [client_socket, peer_ip, peer_data, Message(message_state).name]
+                return peer
 
-            return ''
+            return []
                 
                 # TODO: Make a system to keep track of peers and their status
                 # NOTE: Client sockets are not closed? 

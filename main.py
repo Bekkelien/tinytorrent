@@ -7,7 +7,7 @@ from src.manager import TrackerManager
 from src.protocol import PeerWire
 from src.download import Download
 from src.storage import StoreDownload
-from src.helpers import iprint
+from src.helpers import iprint, dprint, pprint
 
 # Configuration settings
 config = Config().get_config()
@@ -34,27 +34,39 @@ if __name__ == '__main__':
         download = Download(metadata) 
 
         data = b''
-        for i in range(10000): # HAX
+        peers = []
+        # Create a func from this
+        for i in range(1000): # HAX
             for index, _ in enumerate(peer_ips, start=0):
                 iprint("TEST CONNECTION:", index, color='blue')
             #TODO: We are doing handshake every time ATM 
-                current_peer = peer_wire.handshake(peer_ips, index)
-                if current_peer:
-                    state = True
-                    # Jumps peer for each piece 
-                    while state: # Hax to avoid jumpig for each piece
-                        block_data, flag = download.linear_test(current_peer) 
-                        
-                        if block_data:
-                            data = data + block_data
-                            size_bytes = len(data)
-                            #size_mb = size_bytes / (1024*1024)
-                            print(size_bytes)
+                peer = peer_wire.handshake(peer_ips, index)
+                if peer:
+                    peers.append(peer)
+            
+            # Build a sorter here
+            pprint(peers)
 
-                        else:
-                            state = False
-                
-                        if flag:
-                            StoreDownload(metadata).save(data)
-    
-                            raise NotImplementedError
+            for peer in peers: #(Only one iteration for testing now)
+            #current_peer = peer_wire.handshake(peer_ips, index)
+
+                current_peer = peer[0] # Socket
+                state = True
+                # Jumps peer for each piece 
+                while state: # Hax to avoid jumpig for each piece
+                    block_data, flag = download.linear_test(current_peer) 
+                    
+                    if block_data:
+                        data = data + block_data
+                        size_bytes = len(data)
+                        #size_mb = size_bytes / (1024*1024)
+                        print(size_bytes)
+
+                    else:
+                        state = False
+            
+                    if flag:
+                        StoreDownload(metadata).save(data)
+
+                        raise NotImplementedError
+
