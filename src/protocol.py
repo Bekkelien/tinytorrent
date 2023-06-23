@@ -1,6 +1,8 @@
 import json
 import socket
 import math
+
+from typing import List, Tuple
 from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass
@@ -31,6 +33,8 @@ class Handshake:
     pstrlen = b'\x13'                
     pstr =  b'BitTorrent protocol' 
     reserved = b'\x00\x00\x00\x00\x00\x00\x00\x00'
+
+    response_length = 68
     #reserved = b'\x00\x00\x00\x00\x00\x10\x00\x00'
 
 @dataclass
@@ -53,7 +57,7 @@ class PeerMessage():
     def __init__(self, clientSocket):
         self.clientSocket = clientSocket
     
-    # TODO: Rename function 
+    # TODO: Rename function (NOTE: cleaner to make a function for each message then making a complex generic one)
     def state_message(self, message, length=1) -> str:
         # NOTE: Currently assuming we are choked if we don't get a state message back from the peer
         if message.value >= 0:
@@ -93,38 +97,7 @@ class PeerMessage():
     # Merge else statements 
 
 
-    def bitfield(clientSocket, response = []) -> bytes:
-        """ 
-        Receives a bitfield response and validates it 
-        Returns empty bit array if invalid 
 
-        """
-        try:
-            response = clientSocket.recv(4096) # TODO: Set buffer in config 
-            bitfield_id = unpack('>b', response[4:5])[0]
-
-        except:
-            wprint("Peer did not send a bitfield message in a timely manner")
-            return b''
-
-        if bitfield_id == Message.bitfield.value:
-            bitfield_payload = response[5:]
-            iprint("Bitfield received")
-            return bitfield_payload
-
-        else:
-            wprint("Bitfield message invalid")
-            return b''
-
-    def bitfield_check(bitfield_payload, metadata) -> str:
-        # TODO: seeder leacher is not really 100% as only ok bitfield awards a peer as a seeder
-        dprint("Bitfield payload from peer:", BitArray(bitfield_payload).bin)
-        
-        if bitfield_payload:
-            if metadata['bitfield'] == BitArray(bitfield_payload).bin:
-                return 'seeder' # Peer has 100% of data 
-        
-        return 'leecher' # Peer has x % of data 
 
 
 class PeerWire():
@@ -146,17 +119,52 @@ class PeerWire():
         else:
             iprint("Peer client:", Clients.clients[client_id])
 
+
+    def _bitfield(clientSocket: socket.socket, response: List[bytes]) -> bytes:
+        """ 
+        Receives a bitfield response and validates it 
+        Returns empty bit array if invalid 
+
+        """
+        try:
+            response = clientSocket.recv(4096) # TODO: Set buffer in config and find the "perfect" buffer length
+            dprint("TEST:", response)
+            bitfield_id = unpack('>b', response[4:5])[0]
+
+        except:
+            wprint("No bitfield response from peer")
+            return b''
+
+        if bitfield_id == Message.bitfield.value:
+            iprint("Bitfield received from peer")
+            bitfield_payload = response[5:]
+            return bitfield_payload
+
+        
+        wprint("Invalid Bitfield response from peer")
+        return b''
+
+    def _bitfield_check(self, bitfield_payload) -> str:
+        # TODO: seeder leacher is not really 100% as only ok bitfield awards a peer as a seeder
+        iprint("Bitfield payload from peer:", BitArray(bitfield_payload).bin)
+        
+        dprint(BitArray(bitfield_payload).bin)
+        if bitfield_payload:
+            if self.metadata['bitfield'] == BitArray(bitfield_payload).bin:
+                return 'seeder' # Peer has 100% of data 
+        
+        return 'leecher' # Peer has x % of data 
+    
     @timer
-    def handshake(self, peer_ip, haxhax) -> list: 
+    def handshake(self, peer_addresses: List[List[Tuple]], peer_id: int) -> list: 
         """ 
         'BitTorrent protocol' 1.0
 
         Handshake:
         <len(pstr)><pstr><reserved><info_hash><peer_id> 
-        
         """
-        # HAX: client_address NOTE: new all adresses for testing
-        peer_ip = peer_ip[haxhax]
+        peer = []
+        peer_address = peer_addresses[peer_id]
 
         message = pack('>1s19s8s20s20s',Handshake.pstrlen,
                                         Handshake.pstr,
@@ -169,64 +177,59 @@ class PeerWire():
         client_socket.settimeout(config['tcp']['timeout'])
 
         try:  
-            iprint("Connecting to peer:", peer_ip[0], "::" , peer_ip[1])
+            iprint("Establishing connection to peer:", peer_id, "on address:", peer_address)
 
-            client_socket.connect((tuple(peer_ip)))
+            client_socket.connect((peer_address))
             client_socket.send(message)
             response = client_socket.recv(config['tcp']['handshake_buffer']) 
 
-            iprint("Connected to peer", peer_ip[0], "::" , peer_ip[1])
+            iprint("Connected to peer:", peer_id, "on address:", peer_address)
 
-        
         except Exception as e: # TODO Improve this
             dprint("Connect to peer failed with exception:", e)
-            return []
+            return peer
         
-        # TODO :: Create a function for this!
-
-        # Verify that the handshake response is of the expected type
-        if 49 <= len(response) <= 67:
-            wprint("Handshake response of type: compact peer formate is not supported")
-    
-        elif len(response) >= 68:
-            response = unpack('>1s19s8s20s20s', response[0:68])
-
-            # Parse handshake response (Bytes) b'data'
-            handshake_pstrlen = response[0]
-            handshake_pstr = response[1]
-            handshake_reserved = response[2]            
-            handshake_info_hash = response[3]
-            handshake_client_id = response[4]
+        if len(response) >= Handshake.response_length:
+            response = unpack('>1s19s8s20s20s', response[0:Handshake.response_length])
             
-            if (Handshake.pstrlen + Handshake.pstr) != handshake_pstrlen + handshake_pstr:
-                wprint("Handshake response failed unknown protocol:", handshake_pstr.decode("utf-8", "ignore"))
-                return []
+            pstrlen, pstr, reserved, info_hash, client_id = response[0:5]
+
+            if (Handshake.pstrlen + Handshake.pstr) != pstrlen + pstr:
+                wprint("Handshake response failed unknown protocol:", pstr.decode("utf-8", "ignore"))
+                return peer
 
             # Validate
-            if self.metadata['info_hash'] == handshake_info_hash:
+            if self.metadata['info_hash'] == info_hash:
                 iprint("Handshake accepted")
-                self._extensions(handshake_reserved) # NOTE: No handling ATM
-                self._peer_client_software(handshake_client_id)
-
-                # Check for bitfield response
-                bitfield_payload = PeerMessage.bitfield(client_socket)
-                peer_data = PeerMessage.bitfield_check(bitfield_payload, self.metadata)
+                self._extensions(reserved) # NOTE: No handling ATM
+                self._peer_client_software(client_id)
 
                 # Send interested message to try to unchoke the peer
                 message_state = PeerMessage(client_socket).state_message(Message.interested) # TODO Fix function allot 
-
                 iprint("Peer responded with:", Message(message_state).name)
+
+                # Check for bitfield response
+                bitfield_payload = self._bitfield(client_socket)
+                peer_data = self._bitfield_check(bitfield_payload)
+
 
                 # Error print just used for debugging ATM
                 #if bitfield_status == 'seeder' and Message(message_state).name == Message.unchoke.name:
 
                 #if bitfield_status == 'seeder': # Optimistic to request data from possible choked seeder (NOTE: TESTING)
                   #  dprint("TESTING seeder with current state:", Message(message_state).name)
-                dprint("Testing without looking for bitfield")
-                peer = [client_socket, peer_ip, peer_data, Message(message_state).name]
+                #dprint("Testing without looking for bitfield")
+                peer = [client_socket, peer_data, Message(message_state).name]
+                dprint(peer)
+                print("--------------------------------------------------------")
+                #eprint(peer[0].getpeername())
                 return peer
 
-            return []
+        elif len(response) < Handshake.response_length:
+            wprint("Handshake response length received:", len(response), "lower limit for a valid response:", Handshake.response_length)
+        
+        
+        return peer
                 
                 # TODO: Make a system to keep track of peers and their status
                 # NOTE: Client sockets are not closed? 

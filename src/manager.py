@@ -57,7 +57,8 @@ class TrackerManager():
 
             if peer_ip:
                 self.peer_ip = self.peer_ip + peer_ip
-                self.peer_ip = [list(x) for x in set(tuple(x) for x in self.peer_ip)] # Remove duplicates
+                self.peer_ip = [tuple(x) for x in set(tuple(x) for x in self.peer_ip)] # Remove duplicates
+
     
         iprint("Get clients resulted in:", len(self.peer_ip), "Peers/Client addresses")
         return self.peer_ip

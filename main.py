@@ -17,21 +17,10 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['gimp.torrent']
+    files = ['pi-lite.torrent']
 
     for file in files:
         metadata = TorrentFile(PATH / file).read()
-        
-        ### Get peers IP addresses ### NOTE:: We only get peers when program starts ATM
-        tracker = TrackerManager(metadata)
-        peer_ips = tracker.get_clients()
-        #dprint(peer_ips)
-
-        ### Object for one peer_wire connection ATM
-        peer_wire = PeerWire(metadata)
-
-        # Object for one download ATM
-        download = Download(metadata) 
 
         data = b''
 
@@ -40,42 +29,53 @@ if __name__ == '__main__':
             import asyncio
             from async_peerwire_testing import Handshake
         while True:
-            if ASYNC: peers = asyncio.run(Handshake(metadata).run(peer_ips))
+            tracker = TrackerManager(metadata)
+            peer_addresses = tracker.get_clients()
+            peer_wire = PeerWire(metadata)
+            download = Download(metadata) 
+
+            if ASYNC: peers = asyncio.run(Handshake(metadata).run(peer_addresses))
             else:
                 peers = []
                 # Create a func from this
-                for index, _ in enumerate(peer_ips, start=0):
-                    iprint("TEST CONNECTION:", index, color='blue')
+                for peer_id, _ in enumerate(peer_addresses, start=0):
+                    #iprint("TEST CONNECTION:", peer_id, color='blue')
                 #TODO: We are doing handshake every time ATM 
-                    peer = peer_wire.handshake(peer_ips, index)
-                    if peer:
-                        peers.append(peer)
-                        if len(peers) == 10: 
-                            break
+                    peer = peer_wire.handshake(peer_addresses, peer_id)
+                    
+                    DOWNLOAD = False
+                    if DOWNLOAD:
+                        if peer:
+                            #peers.append(peer)
+
+                        # Trying to download as soon as connected 
+                        #for peer in peers: #(Only one iteration for testing now)
+                        #current_peer = peer_wire.handshake(peer_ips, index)
+
+                            current_peer = peer[0] # Socket
+                            state = True
+                            # Jumps peer for each piece 
+                            while state: # Hax to avoid jumpig for each piece
+                                piece_data, flag = download.linear_download_piece(current_peer) 
+                                
+                                if piece_data:
+                                    data = data + piece_data
+
+                                else:
+                                    state = False
+
+                                if flag:
+                                    StoreDownload(metadata).save(data)
+                                    iprint("Download success, what a time to be alive ")
+                                    raise NotImplementedError
+
+                        #if len(peers) == 10: 
+                        #   break
             
             # Move out of here at some points
-            peers = PeerManager.rank_peers(peers)
+            #peers = PeerManager.rank_peers(peers)
 
             # END LINEAR
-            pprint(peers)
+            #pprint(peers)
 
-            for peer in peers: #(Only one iteration for testing now)
-            #current_peer = peer_wire.handshake(peer_ips, index)
-
-                current_peer = peer[0] # Socket
-                state = True
-                # Jumps peer for each piece 
-                while state: # Hax to avoid jumpig for each piece
-                    piece_data, flag = download.linear_download_piece(current_peer) 
-                    
-                    if piece_data:
-                        data = data + piece_data
-
-                    else:
-                        state = False
-            
-                    if flag:
-                        StoreDownload(metadata).save(data)
-                        iprint("Download success, what a time to be alive ")
-                        raise NotImplementedError
 

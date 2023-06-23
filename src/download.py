@@ -117,7 +117,8 @@ class Download:
         flag = self._piece_last_check()
 
         if piece_data and not flag:
-            piece_download_rate = (time.time() - piece_start_time) / ((blocks * BLOCK_SIZE) / 1024 / 1024)
+            # BUG
+            piece_download_rate = (time.time() - piece_start_time) / ((blocks * BLOCK_SIZE)) / 1024*1024
             iprint("Piece download rate:", piece_download_rate, "MB/s")
 
         return piece_data, flag
