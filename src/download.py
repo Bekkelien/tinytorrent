@@ -49,7 +49,7 @@ class Download:
 
             # TODO: Update metadata Downloaded well that is hard without storing it to file (NOTE: make metadata a file?), left also download speed for this piece here
 
-            if self.factor > 0.2: self.factor = self.factor - 0.1 # NOTE:: The most dumb speed adjuster for downloading in the history of downloading (how to know when peer responds with data?)
+            if self.factor > 0.25: self.factor = self.factor - 0.05 # NOTE:: The most dumb speed adjuster for downloading in the history of downloading (how to know when peer responds with data?)
 
             # NOTE: this was a bad idea since strings in python are immutable but lets go with it for now
             self.metadata['pieces_downloaded'] = self.metadata['pieces_downloaded'][:self.current_piece_index] + '1' + self.metadata['pieces_downloaded'][self.current_piece_index + 1:]
@@ -69,9 +69,9 @@ class Download:
         return False
 
 
-    def linear_download_piece(self, current_peer): # Bytes,bool how to do two return stuff thing
+    def linear_download_piece(self, client_socket): # Bytes,bool how to do two return stuff thing
         blocks = self._linear_piece_manager() # Piece to download
-        dprint(current_peer)
+        dprint(client_socket)
         
         piece_data = b''
         timeout_hax = 0
@@ -86,9 +86,9 @@ class Download:
             try:
                 looking_hax = True
                 while looking_hax:
-                    current_peer.send(request_message)
+                    client_socket.send(request_message)
                     time.sleep(self.factor) # NOTE:HAX
-                    response = current_peer.recv(24576) # Find a good buffer size
+                    response = client_socket.recv(24576) # Find a good buffer size
                     message = unpack('>IBII', response[0:13]) # Unpacking transaction "Header"
 
                     if message[0] == BLOCK_SIZE + 9 and message[1] == Message.piece.value and message[2] == self.current_piece_index:

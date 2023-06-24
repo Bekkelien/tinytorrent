@@ -82,7 +82,7 @@ def pprint(peers):
         split_2 = max([len(str(i[2])) for i in peers])
 
         for peer in peers:
-            print(f"{datetime.now()} [PEER] Peer: {peer[1]}, {' ' * (split_1-len(str(peer[1])))} contribution: {peer[2]}, {' ' * (split_2-len(str(peer[2])))} state: {peer[3]}")
+            print(f"{datetime.now()} [PEER] Peer: {peer[1]}, {' ' * (split_1-len(str(peer[1])))} data: {peer[2]} %, {' ' * (split_2-len(str(peer[2])))} state: {peer[3]}")
 
     else:
         print(f"{datetime.now()} [PEER] No active peers")

@@ -4,7 +4,7 @@ from pathlib import Path
 from src.config import Config
 from src.read_torrent import TorrentFile
 from src.manager import TrackerManager
-from src.protocol import PeerWire, PeerManager
+from src.protocol import PeerWire
 from src.download import Download
 from src.storage import StoreDownload
 from src.helpers import iprint, dprint, pprint
@@ -17,8 +17,9 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['pi-lite.torrent', 'gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['gimp.torrent']
-
+    #files = ['gimp.torrent']
+    files = ['pi-lite.torrent']
+    
     for file in files:
         metadata = TorrentFile(PATH / file).read()
 
@@ -31,32 +32,28 @@ if __name__ == '__main__':
         while True:
             tracker = TrackerManager(metadata)
             peer_addresses = tracker.get_clients()
-            peer_wire = PeerWire(metadata)
             download = Download(metadata) 
 
             if ASYNC: peers = asyncio.run(Handshake(metadata).run(peer_addresses))
             else:
-                peers = []
-                # Create a func from this
-                for peer_id, _ in enumerate(peer_addresses, start=0):
-                    #iprint("TEST CONNECTION:", peer_id, color='blue')
                 #TODO: We are doing handshake every time ATM 
-                    peer = peer_wire.handshake(peer_addresses, peer_id)
-                    
-                    DOWNLOAD = False
-                    if DOWNLOAD:
-                        if peer:
-                            #peers.append(peer)
+                peer_addresses_connected = PeerWire(metadata, peer_addresses).connect()
+
+                DOWNLOAD = True
+                if DOWNLOAD:
+                    if peer_addresses_connected:
+                        for peer in peer_addresses_connected:
+                        #peers.append(peer)
 
                         # Trying to download as soon as connected 
                         #for peer in peers: #(Only one iteration for testing now)
                         #current_peer = peer_wire.handshake(peer_ips, index)
 
-                            current_peer = peer[0] # Socket
+                            client_socket = peer[0] # Socket
                             state = True
                             # Jumps peer for each piece 
-                            while state: # Hax to avoid jumpig for each piece
-                                piece_data, flag = download.linear_download_piece(current_peer) 
+                            while state: # Hax to avoid for each piece
+                                piece_data, flag = download.linear_download_piece(client_socket) 
                                 
                                 if piece_data:
                                     data = data + piece_data

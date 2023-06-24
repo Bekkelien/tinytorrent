@@ -13,7 +13,7 @@ from collections import Counter
 
 # Internals
 from src.config import Config
-from src.helpers import iprint, eprint, wprint, dprint, timer
+from src.helpers import iprint, eprint, wprint, dprint, timer, pprint
 
 # Configuration settings
 config = Config().get_config()
@@ -149,11 +149,10 @@ class Bitfield:
 
 
 class PeerWire():
-    def __init__(self, metadata):
+    def __init__(self, metadata, peer_addresses):
         self.metadata = metadata
-        self.peers_connected = [] # NOTE: This is not really a good solution to store in a list, hard to remove invalid peers or update status
-        self.piece_hax = [] # TODO: HAX TEMP
-        self.torrent_data = b''
+        self.peer_addresses = peer_addresses
+
 
     def _extensions(self, reserved):
         if reserved[5]  == Extensions.exception_protocol:
@@ -168,7 +167,7 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
     
     @timer
-    def handshake(self, peer_addresses: List[List[Tuple]], peer_id: int) -> list: 
+    def _handshake(self, peer_address: Tuple) -> list: # TODO Separate this code further 
         """ 
         'BitTorrent protocol' 1.0
 
@@ -176,26 +175,25 @@ class PeerWire():
         <len(pstr)><pstr><reserved><info_hash><peer_id> 
         """
         peer = []
-        peer_address = peer_addresses[peer_id]
+
 
         message = pack('>1s19s8s20s20s',Handshake.pstrlen,
                                         Handshake.pstr,
                                         Handshake.reserved, \
                                         self.metadata['info_hash'], 
                                         config['client']['peer_id'].encode())
-        
-        # Network setup TCP socket
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.settimeout(config['tcp']['timeout'])
+
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.settimeout(config['tcp']['timeout'])
 
         try:  
-            iprint("Establishing connection to peer:", peer_id, "on address:", peer_address)
+            iprint("Establishing connection to peer:", peer_address)
 
-            client_socket.connect((peer_address))
-            client_socket.send(message)
-            response = client_socket.recv(config['tcp']['handshake_buffer']) 
+            self.client_socket.connect((peer_address))
+            self.client_socket.send(message)
+            response = self.client_socket.recv(config['tcp']['handshake_buffer']) 
 
-            iprint("Connected to peer:", peer_id, "on address:", peer_address)
+            iprint("Connected to peer:", peer_address)
 
         except Exception as e: # TODO Improve this
             dprint("Connect to peer failed with exception:", e)
@@ -214,23 +212,23 @@ class PeerWire():
             if self.metadata['info_hash'] == info_hash:
                 iprint("Handshake accepted")
                 self._extensions(reserved) # NOTE: No handling ATM
-                self._peer_client_software(client_id)
+                self._peer_client_software(client_id) # NOTE: No handling ATM
 
                 # Check for bitfield response
-                peer_status, peer_data_percentage = Bitfield(client_socket, self.metadata).consume()
+                peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
 
                 # Send interested message to try to unchoke the peer
-                message_state = PeerMessage(client_socket).state_message(Message.interested) # TODO Fix function allot 
+                message_state = PeerMessage(self.client_socket).state_message(Message.interested) # TODO Fix function allot 
                 iprint("Peer responded with:", Message(message_state).name)
 
-                peer = [client_socket, peer_status, Message(message_state).name, peer_data_percentage]
-                dprint(peer)
+                peer = [self.client_socket, peer_status, peer_data_percentage, Message(message_state).name]
+                # TODO :: List datatype is probably a bad idea here since we need to keep track of indexes ?
+                #dprint(peer)
                 #eprint(peer[0].getpeername())
                 return peer
 
         elif len(response) < Handshake.response_length:
-            wprint("Handshake response length received:", len(response), "lower limit for a valid response:", Handshake.response_length)
-        
+            wprint("Handshake response length invalid")
         
         return peer
                 
@@ -238,3 +236,34 @@ class PeerWire():
                 # NOTE: Client sockets are not closed? 
                 # TODO: Make async 
                 # STOP FUNCTION HERE
+
+
+
+    def _rank_peers(self, peer_address_connected): 
+        peer_address_connected = sorted(peer_address_connected, key=lambda x: (x[3] == 'unchoke', x[2]))[::-1]
+        return peer_address_connected
+
+    def connect(self): # Make peer limit to config TODO: 
+        
+        peer_address_connected=[]
+        for peer_address in self.peer_addresses:
+            peer = self._handshake(peer_address)
+
+            if peer: peer_address_connected.append(peer)
+            else: self.client_socket.close()
+
+            # TESTING::: START
+            pprint(self._rank_peers(peer_address_connected)) # debugging 
+            # TESTING::: END
+
+            # HAX
+            MAX_PEER_CONNECTED = 25
+            if len(peer_address_connected) >= MAX_PEER_CONNECTED:
+                return peer_address_connected
+            
+            # TODO: Remove "bad" peers 
+
+        peer_address_connected = self._rank_peers(peer_address_connected)
+        pprint(peer_address_connected)
+        return peer_address_connected
+    
