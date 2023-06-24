@@ -1,6 +1,7 @@
 import json
 import socket
 import math
+import time
 
 from typing import List, Tuple
 from enum import Enum
@@ -120,7 +121,7 @@ class PeerWire():
             iprint("Peer client:", Clients.clients[client_id])
 
 
-    def _bitfield(clientSocket: socket.socket, response: List[bytes]) -> bytes:
+    def _bitfield(self, clientSocket: socket.socket) -> bytes:
         """ 
         Receives a bitfield response and validates it 
         Returns empty bit array if invalid 
@@ -131,8 +132,8 @@ class PeerWire():
             dprint("TEST:", response)
             bitfield_id = unpack('>b', response[4:5])[0]
 
-        except:
-            wprint("No bitfield response from peer")
+        except Exception as e: # TODO::
+            dprint("No bitfield message:", e)
             return b''
 
         if bitfield_id == Message.bitfield.value:
@@ -204,14 +205,13 @@ class PeerWire():
                 self._extensions(reserved) # NOTE: No handling ATM
                 self._peer_client_software(client_id)
 
-                # Send interested message to try to unchoke the peer
-                message_state = PeerMessage(client_socket).state_message(Message.interested) # TODO Fix function allot 
-                iprint("Peer responded with:", Message(message_state).name)
-
                 # Check for bitfield response
                 bitfield_payload = self._bitfield(client_socket)
                 peer_data = self._bitfield_check(bitfield_payload)
 
+                # Send interested message to try to unchoke the peer
+                message_state = PeerMessage(client_socket).state_message(Message.interested) # TODO Fix function allot 
+                iprint("Peer responded with:", Message(message_state).name)
 
                 # Error print just used for debugging ATM
                 #if bitfield_status == 'seeder' and Message(message_state).name == Message.unchoke.name:
