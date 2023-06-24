@@ -16,8 +16,8 @@ if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 
     PATH = Path('./src/files/')
-    #files = ['gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['pi-lite.torrent']
+    #files = ['pi-lite.torrent', 'gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
+    files = ['gimp.torrent']
 
     for file in files:
         metadata = TorrentFile(PATH / file).read()

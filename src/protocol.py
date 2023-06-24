@@ -8,6 +8,7 @@ from enum import Enum
 from struct import pack, unpack
 from dataclasses import dataclass
 from bitstring import BitArray
+from collections import Counter
 #from functools import lru_cache
 
 # Internals
@@ -98,7 +99,53 @@ class PeerMessage():
     # Merge else statements 
 
 
+# NOTE: Metadata should be stored to a file to avoid passing to every func 
 
+class Bitfield: 
+    def __init__(self, client_socket: socket.socket, metadata: dict) -> None:
+        self.metadata: dict = metadata
+        self.peer_status: str = 'leecher'
+        self.client_socket: socket.socket = client_socket
+        self.bitfield_payload: str = ''
+        self.peer_data_percentage: int = -1 # -1 = N/A, 0 - 100 = 0-100%
+
+    def _receive(self) -> None:
+        """ bitfield: <len=0001+X><id=5><bitfield> """
+
+        try:
+            response = self.client_socket.recv(4096) # TODO: compute the buffer length in the future 
+            bitfield_id  = unpack('>b', response[4:5])[0]
+
+        except Exception as e: # TODO::
+            dprint("Peer did not send a bitfield message:", e)
+            return
+
+        if bitfield_id  == Message.bitfield.value: # Check what we have correct bitfield id=5
+            if len(self.metadata['bitfield']) == len(str(BitArray(response[5:]).bin)): # Using data instead of first 4 bytes of response here 
+                iprint("Valid bitfield received from peer")
+                self.bitfield_payload = str(BitArray(response[5:]).bin)
+
+        dprint("Invalid bitfield response from peer")
+
+    def _determine_peer_status(self) -> None:
+        dprint("Bitfield payload from peer:", self.bitfield_payload)
+        
+        if self.bitfield_payload:
+            if self.metadata['bitfield'] == self.bitfield_payload:
+                self.peer_status = 'seeder' # Peer has 100% of data 
+                self.peer_data_percentage = 100
+
+            else:
+                self.peer_data_percentage = int(Counter(self.metadata['bitfield'])['1'] - Counter(self.bitfield_payload)['1'])
+
+        dprint("Peer has:", self.peer_data_percentage, "% of data")
+    # TODO :: Add in piece to keep track
+
+    def consume(self) -> str:
+        self._receive()
+        self._determine_peer_status()
+
+        return self.peer_status, self.peer_data_percentage
 
 
 class PeerWire():
@@ -119,42 +166,6 @@ class PeerWire():
             wprint("Unknown client software for peer id:", peer_id, "TODO: Implement some verification here?")
         else:
             iprint("Peer client:", Clients.clients[client_id])
-
-
-    def _bitfield(self, clientSocket: socket.socket) -> bytes:
-        """ 
-        Receives a bitfield response and validates it 
-        Returns empty bit array if invalid 
-
-        """
-        try:
-            response = clientSocket.recv(4096) # TODO: Set buffer in config and find the "perfect" buffer length
-            dprint("TEST:", response)
-            bitfield_id = unpack('>b', response[4:5])[0]
-
-        except Exception as e: # TODO::
-            dprint("No bitfield message:", e)
-            return b''
-
-        if bitfield_id == Message.bitfield.value:
-            iprint("Bitfield received from peer")
-            bitfield_payload = response[5:]
-            return bitfield_payload
-
-        
-        wprint("Invalid Bitfield response from peer")
-        return b''
-
-    def _bitfield_check(self, bitfield_payload) -> str:
-        # TODO: seeder leacher is not really 100% as only ok bitfield awards a peer as a seeder
-        iprint("Bitfield payload from peer:", BitArray(bitfield_payload).bin)
-        
-        dprint(BitArray(bitfield_payload).bin)
-        if bitfield_payload:
-            if self.metadata['bitfield'] == BitArray(bitfield_payload).bin:
-                return 'seeder' # Peer has 100% of data 
-        
-        return 'leecher' # Peer has x % of data 
     
     @timer
     def handshake(self, peer_addresses: List[List[Tuple]], peer_id: int) -> list: 
@@ -206,22 +217,14 @@ class PeerWire():
                 self._peer_client_software(client_id)
 
                 # Check for bitfield response
-                bitfield_payload = self._bitfield(client_socket)
-                peer_data = self._bitfield_check(bitfield_payload)
+                peer_status, peer_data_percentage = Bitfield(client_socket, self.metadata).consume()
 
                 # Send interested message to try to unchoke the peer
                 message_state = PeerMessage(client_socket).state_message(Message.interested) # TODO Fix function allot 
                 iprint("Peer responded with:", Message(message_state).name)
 
-                # Error print just used for debugging ATM
-                #if bitfield_status == 'seeder' and Message(message_state).name == Message.unchoke.name:
-
-                #if bitfield_status == 'seeder': # Optimistic to request data from possible choked seeder (NOTE: TESTING)
-                  #  dprint("TESTING seeder with current state:", Message(message_state).name)
-                #dprint("Testing without looking for bitfield")
-                peer = [client_socket, peer_data, Message(message_state).name]
+                peer = [client_socket, peer_status, Message(message_state).name, peer_data_percentage]
                 dprint(peer)
-                print("--------------------------------------------------------")
                 #eprint(peer[0].getpeername())
                 return peer
 
@@ -235,17 +238,3 @@ class PeerWire():
                 # NOTE: Client sockets are not closed? 
                 # TODO: Make async 
                 # STOP FUNCTION HERE
-
-
-
-class PeerManager:
-    def __init__(self) -> None:
-        pass
-
-    def rank_peers(peers):
-        """ Simple raking function for testing """
-        seeders = [i for i in peers if i[2] == 'seeder']
-        seeders = sorted(seeders, key=lambda x: x[3], reverse=True)
-        leechers = [i for i in peers if i[2] == 'leecher']
-        leechers = sorted(leechers, key=lambda x: x[3], reverse=True)
-        return seeders + leechers
