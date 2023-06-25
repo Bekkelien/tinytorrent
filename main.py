@@ -1,3 +1,5 @@
+import psutil
+
 from pathlib import Path
 
 # Internals
@@ -17,8 +19,8 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['pi-lite.torrent', 'gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    #files = ['gimp.torrent']
-    files = ['pi-lite.torrent']
+    files = ['gimp.torrent']
+    #files = ['pi-lite.torrent']
     
     for file in files:
         metadata = TorrentFile(PATH / file).read()
@@ -39,6 +41,8 @@ if __name__ == '__main__':
                 #TODO: We are doing handshake every time ATM 
                 peer_addresses_connected = PeerWire(metadata, peer_addresses).connect()
 
+                # TEST
+                print(psutil.net_connections())
                 DOWNLOAD = True
                 if DOWNLOAD:
                     if peer_addresses_connected:
