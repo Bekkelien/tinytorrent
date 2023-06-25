@@ -1,6 +1,6 @@
 ## Tinytorrent a tiny automatic Torrent client
 
-Work in progress
+Work in progress, and anything TCP is a mess you will be connected to the whole world, network is not my strong suit :)
 
 ### Installation
 ```console

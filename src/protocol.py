@@ -255,7 +255,7 @@ class PeerWire():
                 self.client_socket.close()
 
             # HAX (Make a peer manager)
-            MAX_PEER_CONNECTED = 5
+            MAX_PEER_CONNECTED = 10
             if len(peer_address_connected) >= MAX_PEER_CONNECTED:
                 break
             

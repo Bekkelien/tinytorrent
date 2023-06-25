@@ -99,6 +99,14 @@ class Download:
                         # TEST HAX START: (If not full data look again in buffer)
                         hax = 0
                         while True:
+                            # SUPERHAX START
+                            if self.remaining_pieces == 1 and blocks == block + 1: 
+                                response = response + client_socket.recv(13 + self.block_size_last - len(response))
+                                time.sleep(0.05)
+                                hax += 1
+                                if hax > 4:
+                                    break # Should then move to next not continue to download BUG
+                            # SUPERHAX END
                             if len(response) < 13 + BLOCK_SIZE:
                                 #dprint("TEST:", len(response), "Expected:", 13 + BLOCK_SIZE)
                                 response = response + client_socket.recv(13 + BLOCK_SIZE - len(response))
@@ -119,7 +127,7 @@ class Download:
                     else:
                         dprint("Not a piece message")
 
-                    # After time t break out and move to next peer
+                    # After time t break out and move to next peer NOTE: do we ever get here even?
                     if (time.time() - start)  >= 1: # 500ms
                         print("Peer did not send a valid piece message within the alloted time")
                         return b'', False
