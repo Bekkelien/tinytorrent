@@ -3,8 +3,8 @@ import socket
 import math
 import time
 
-from typing import List, Tuple
 from enum import Enum
+from typing import List, Tuple
 from struct import pack, unpack
 from dataclasses import dataclass
 from bitstring import BitArray
@@ -124,11 +124,12 @@ class Bitfield:
             if len(self.metadata['bitfield']) == len(str(BitArray(response[5:]).bin)): # Using data instead of first 4 bytes of response here 
                 iprint("Valid bitfield received from peer")
                 self.bitfield_payload = str(BitArray(response[5:]).bin)
+                return
 
         dprint("Invalid bitfield response from peer")
 
     def _determine_peer_status(self) -> None:
-        dprint("Bitfield payload from peer:", self.bitfield_payload)
+        #dprint("Bitfield payload from peer:", self.bitfield_payload)
         
         if self.bitfield_payload:
             if self.metadata['bitfield'] == self.bitfield_payload:
@@ -138,7 +139,7 @@ class Bitfield:
             else:
                 self.peer_data_percentage = int(Counter(self.metadata['bitfield'])['1'] - Counter(self.bitfield_payload)['1'])
 
-        dprint("Peer has:", self.peer_data_percentage, "% of data")
+        #dprint("Peer has:", self.peer_data_percentage, "% of data")
     # TODO :: Add in piece to keep track
 
     def consume(self) -> str:
@@ -152,7 +153,6 @@ class PeerWire():
     def __init__(self, metadata, peer_addresses):
         self.metadata = metadata
         self.peer_addresses = peer_addresses
-
 
     def _extensions(self, reserved):
         if reserved[5]  == Extensions.exception_protocol:
@@ -170,12 +170,9 @@ class PeerWire():
     def _handshake(self, peer_address: Tuple) -> list: # TODO Separate this code further 
         """ 
         'BitTorrent protocol' 1.0
-
-        Handshake:
-        <len(pstr)><pstr><reserved><info_hash><peer_id> 
+        Handshake: <len(pstr)><pstr><reserved><info_hash><peer_id> 
         """
         peer = []
-
 
         message = pack('>1s19s8s20s20s',Handshake.pstrlen,
                                         Handshake.pstr,
@@ -249,17 +246,18 @@ class PeerWire():
         for peer_address in self.peer_addresses:
             peer = self._handshake(peer_address)
 
-            if peer: peer_address_connected.append(peer)
-            else: self.client_socket.close()
+            iprint("Connected to:", len(peer_address_connected), "peers")
 
-            # TESTING::: START
-            pprint(self._rank_peers(peer_address_connected)) # debugging 
-            # TESTING::: END
+            if peer: 
+                peer_address_connected.append(peer)
+                iprint("Connected to peer:", peer[0].getpeername())
+            else: 
+                self.client_socket.close()
 
-            # HAX
+            # HAX (Make a peer manager)
             MAX_PEER_CONNECTED = 25
             if len(peer_address_connected) >= MAX_PEER_CONNECTED:
-                return peer_address_connected
+                break
             
             # TODO: Remove "bad" peers 
 
