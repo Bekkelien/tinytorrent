@@ -44,7 +44,7 @@ class Extensions:
     fast_extensions = b'\x04' # Not implemented
     exception_protocol = 16 # == b'\x10'== BEP 10
 
-@dataclass
+@dataclass # NOTE: Double use and messy with client in client used 2 times
 class Clients:
     clients = json.load(open('./src/clients.json'))
     def _peer_client_software(self, peer_id):
@@ -109,11 +109,12 @@ class Bitfield:
         self.bitfield_payload: str = ''
         self.peer_data_percentage: int = -1 # -1 = N/A, 0 - 100 = 0-100%
 
-    def _receive(self) -> None:
+    def _receive(self, header: int = 5) -> None:
         """ bitfield: <len=0001+X><id=5><bitfield> """
 
+        bitfield_length_bytes = int(self.metadata['bitfield_length'] / 8) 
         try:
-            response = self.client_socket.recv(4096) # TODO: compute the buffer length in the future 
+            response = self.client_socket.recv(header + bitfield_length_bytes) 
             bitfield_id  = unpack('>b', response[4:5])[0]
 
         except Exception as e: # TODO::
@@ -158,13 +159,15 @@ class PeerWire():
         if reserved[5]  == Extensions.exception_protocol:
             iprint("Peer support extension protocol: BEP 10 - Extension Protocol for Peers to Send Arbitrary Data")
 
-    def _peer_client_software(self, peer_id):
+    def _peer_client_software(self, peer_id) -> str:
         client_id = peer_id[1:3].decode("utf-8", "ignore") 
 
         if Clients.clients.get(client_id) == None:
             wprint("Unknown client software for peer id:", peer_id, "TODO: Implement some verification here?")
+            return 'Unknown'
         else:
             iprint("Peer client:", Clients.clients[client_id])
+            return Clients.clients[client_id]
     
     @timer
     def _handshake(self, peer_address: Tuple) -> list: # TODO Separate this code further 
@@ -209,7 +212,7 @@ class PeerWire():
             if self.metadata['info_hash'] == info_hash:
                 iprint("Handshake accepted")
                 self._extensions(reserved) # NOTE: No handling ATM
-                self._peer_client_software(client_id) # NOTE: No handling ATM
+                client = self._peer_client_software(client_id) # NOTE: No handling ATM
 
                 # Check for bitfield response
                 peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
@@ -218,7 +221,7 @@ class PeerWire():
                 message_state = PeerMessage(self.client_socket).state_message(Message.interested) # TODO Fix function allot 
                 iprint("Peer responded with:", Message(message_state).name)
 
-                peer = [self.client_socket, peer_status, peer_data_percentage, Message(message_state).name]
+                peer = [self.client_socket, peer_status, peer_data_percentage, Message(message_state).name, client]
                 # TODO :: List datatype is probably a bad idea here since we need to keep track of indexes ?
                 #dprint(peer)
                 #eprint(peer[0].getpeername())
@@ -235,33 +238,25 @@ class PeerWire():
                 # STOP FUNCTION HERE
 
 
+    def _rank_peers(self, connected_peers: list) -> list:
+        connected_peers = sorted(connected_peers, key=lambda x: (x[3] == 'unchoke', x[2]))[::-1]
+        return connected_peers
 
-    def _rank_peers(self, peer_address_connected): 
-        peer_address_connected = sorted(peer_address_connected, key=lambda x: (x[3] == 'unchoke', x[2]))[::-1]
-        return peer_address_connected
-
-    def connect(self): # Make peer limit to config TODO: 
-        
-        peer_address_connected=[]
+    def connect(self) -> list:
+        connected_peers=[]
         for peer_address in self.peer_addresses:
+            if config['peer']['max_connected'] <= len(connected_peers): 
+                break
+            
             peer = self._handshake(peer_address)
-
-            iprint("Connected to:", len(peer_address_connected), "peers")
-
+            
             if peer: 
-                peer_address_connected.append(peer)
-                iprint("Connected to peer:", peer[0].getpeername())
+                connected_peers.append(peer)
+                iprint("Connected to:", len(connected_peers), "peers")
             else: 
                 self.client_socket.close()
 
-            # HAX (Make a peer manager)
-            MAX_PEER_CONNECTED = 10
-            if len(peer_address_connected) >= MAX_PEER_CONNECTED:
-                break
-            
-            # TODO: Remove "bad" peers 
-
-        peer_address_connected = self._rank_peers(peer_address_connected)
-        pprint(peer_address_connected)
-        return peer_address_connected
+        connected_peers = self._rank_peers(connected_peers)
+        pprint(connected_peers)
+        return connected_peers
     
