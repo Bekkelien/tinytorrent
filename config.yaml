@@ -21,6 +21,9 @@ tcp:
   state_message_buffer: 16 # Max size should be 5 
   message_buffer: 4096 # NOTE: LARGE? Need to look into how large this can be! - remember one bit for each piece?
 
+peer:
+  max_connected: 10
+
 client: 
   peer_id: '-TI2080-' # Prefix for TinyTorrent's peer_id. Upon startup this will be given a random suffix as: '-TI2080-12345689123'
   key: 'TINY:'

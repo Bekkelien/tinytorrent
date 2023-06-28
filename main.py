@@ -2,7 +2,7 @@ import psutil
 
 from pathlib import Path
 
-# Internals
+# Internal s
 from src.config import Config
 from src.read_torrent import TorrentFile
 from src.manager import TrackerManager
@@ -19,9 +19,9 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['pi-lite.torrent', 'gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    #files = ['gimp.torrent']
+    files = ['gimp.torrent']
     #files = ['pi-lite.torrent']
-    files = ['ChiaSetup-1.8.1.exe.torrent']
+    #files = ['ChiaSetup-1.8.1.exe.torrent']
     
     for file in files:
         metadata = TorrentFile(PATH / file).read()
@@ -35,7 +35,6 @@ if __name__ == '__main__':
         while True:
             tracker = TrackerManager(metadata)
             peer_addresses = tracker.get_clients()
-            download = Download(metadata) 
 
             if ASYNC: peers = asyncio.run(Handshake(metadata).run(peer_addresses))
             else:
@@ -43,7 +42,7 @@ if __name__ == '__main__':
                 peer_addresses_connected = PeerWire(metadata, peer_addresses).connect()
 
                 # TEST
-                print(psutil.net_connections())
+                #print(psutil.net_connections())
                 DOWNLOAD = True
                 if DOWNLOAD:
                     if peer_addresses_connected:
@@ -58,9 +57,8 @@ if __name__ == '__main__':
                             state = True
                             # Jumps peer for each piece 
                             while state: # Hax to avoid for each piece
-                                piece_data, flag = download.linear_download_piece(client_socket) 
-                                
-                                if piece_data:
+                                piece_data, flag = Download(metadata, client_socket).linear_download_piece() 
+                                if piece_data:  
                                     data = data + piece_data
 
                                 else:
