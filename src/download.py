@@ -8,7 +8,7 @@ from struct import pack, unpack
 from src.config import Config
 from src.read_torrent import TorrentFile
 from src.helpers import iprint, eprint, wprint, dprint
-from src.protocol import Message
+from src.protocol import Message, PeerMessage
 
 # Configuration settings
 config = Config().get_config()
@@ -73,13 +73,12 @@ class Download:
         for block in range(blocks):
             if self.remaining_pieces == 1 and blocks == block + 1:
                 print("Trying to download the last block:", blocks, "in piece:", self.index, "with a size of:", self.block_size_last)
-                request_message = pack('>IBIII', 13, Message.request.value, self.index, block*BLOCK_SIZE, self.block_size_last) 
+                payload = [self.index, block*BLOCK_SIZE, self.block_size_last]
             else:
-                request_message = pack('>IBIII', 13, Message.request.value, self.index, block*BLOCK_SIZE, BLOCK_SIZE)
-            
+                payload = [self.index, block*BLOCK_SIZE, BLOCK_SIZE]
             try:
                 #iprint("Requesting block:", block+1, "from peer")
-                self.client_socket.send(request_message)
+                PeerMessage(self.client_socket).send_request(payload) # TODO: MAKE PAYLOAD Stuff more intuitive 
    
             except Exception as e: # TODO
                 eprint("Cant download piece:", e)

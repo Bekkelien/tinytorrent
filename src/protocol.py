@@ -18,7 +18,8 @@ from src.helpers import iprint, eprint, wprint, dprint, timer, pprint
 # Configuration settings
 config = Config().get_config()
 
-class Message(Enum):
+class Message(Enum): # NOT sure i like Enums or am I using them wrong?
+    # Keep alive not implemented
     choke = 0
     unchoke = 1
     interested = 2
@@ -59,44 +60,48 @@ class PeerMessage():
     def __init__(self, clientSocket):
         self.clientSocket = clientSocket
     
-    # TODO: Rename function (NOTE: cleaner to make a function for each message then making a complex generic one)
-    def state_message(self, message, length=1) -> str:
-        # NOTE: Currently assuming we are choked if we don't get a state message back from the peer
-        if message.value >= 0:
-            iprint("Sending an:", message, "message to peer")
+    def _send_message(self, message_id: int, payload: bytes = b'') -> None:
 
-            # Send message to peer 
-            message = pack('>Ib', length, message.value)
-            # Response from peer TODO:
-            try:
-                self.clientSocket.send(message)
-                response = self.clientSocket.recv(config['tcp']['state_message_buffer']) 
-            except:
-                return Message.choke.value  # NOTE:
+        # TODO # keep alive:       <len=0000> 
+        # TODO # choke:            <len=0001>   <id=0>
+        # TODO # unchoke:          <len=0001>   <id=1>
+        # interested:       <len=0001>   <id=2>
+        # TODO # not interested:   <len=0001>   <id=3>
+        # TODO # have:      <len=0005>   <id=4> <piece index>
+        # TODO # bitfield:  <len=0001+X> <id=5> <bitfield>
+        # request:          <len=0013>   <id=6> <index>         <begin>   <length>
+        # TODO# piece:      <len=0009+X> <id=7> <index>         <begin>   <block>
+        # TODO# cancel:     <len=0013>   <id=8> <index>         <begin>   <length>
+        # TODO# port:       <len=0003>   <id=9> <listen-port>
 
-            if len(response) == 5: # TODO: Improve error handling
-                response = unpack('>Ib', response)
+        if message_id in [Message.choke.value, 
+                          Message.unchoke.value,
+                          Message.interested.value,
+                          Message.notinterested.value]:
+            
+            message = pack('>Ib', 1, message_id)
 
-            else:
-                wprint("Peer state message can't be unpacked, response not correct length")
-                return Message.choke.value # NOTE: If we get here we will fail later due to assuming unchoke
+        if message_id == Message.request.value:
+            message = pack('>IBIII', 13, message_id, payload[0], payload[1], payload[2]) # TODO
 
-            # Validation NOTE: not really a validation function just checks the response length
-            if response[0] == length:
-                #iprint("Peer response:", Message(response[1]).name) # BUG: Fail if response is not a int
-                peer_state = Message(response[1]).value
-                return peer_state # TODO:::
+        try:
+            self.clientSocket.send(message)
+        except Exception as e:
+            eprint("Failed to send:", Message(message_id).name, "Error:", e)
 
-            else:
-                wprint("Peer message failed, unknown prefix/length")
+    def interested(self) -> str: # NOTE MESSY
+        self._send_message(Message.interested.value)
+        try:
+            response = self.clientSocket.recv(5)
+            if len(response) == 5:
+                _, message_id = unpack('>Ib', response)
+                return Message(message_id).name
+        except:
+            wprint("Peer did not respond to interested message")
+        return 'choke'
 
-        else:
-            eprint("Keep alive message not supported for this client ATM") 
-
-        return Message.choke.value  # TODO:::
-
-    # TODO: Function to handle the peer response -> Currently assuming that we get an unchoke on interested message
-    # Merge else statements 
+    def send_request(self, payload) -> None:
+        self._send_message(Message.request.value, payload) # TODO
 
 
 # NOTE: Metadata should be stored to a file to avoid passing to every func 
@@ -208,7 +213,7 @@ class PeerWire():
                 wprint("Handshake response failed unknown protocol:", pstr.decode("utf-8", "ignore"))
                 return peer
 
-            # Validate
+            # Validate  # NOTE :: Messy
             if self.metadata['info_hash'] == info_hash:
                 iprint("Handshake accepted")
                 self._extensions(reserved) # NOTE: No handling ATM
@@ -218,13 +223,10 @@ class PeerWire():
                 peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
 
                 # Send interested message to try to unchoke the peer
-                message_state = PeerMessage(self.client_socket).state_message(Message.interested) # TODO Fix function allot 
-                iprint("Peer responded with:", Message(message_state).name)
+                choke_status = PeerMessage(self.client_socket).interested() 
+                iprint("Peer responded with:", choke_status)
 
-                peer = [self.client_socket, peer_status, peer_data_percentage, Message(message_state).name, client]
-                # TODO :: List datatype is probably a bad idea here since we need to keep track of indexes ?
-                #dprint(peer)
-                #eprint(peer[0].getpeername())
+                peer = [self.client_socket, peer_status, peer_data_percentage, choke_status, client]
                 return peer
 
         elif len(response) < Handshake.response_length:
