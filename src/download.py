@@ -83,12 +83,13 @@ class Download:
             print(self.index, block*BLOCK_SIZE, hax_current_block_size)
             PeerMessage(self.client_socket).send_request(self.index, block*BLOCK_SIZE, hax_current_block_size) # TODO: MAKE PAYLOAD Stuff more intuitive 
 
-        #for block in range(blocks):
+        for block in range(blocks):
+        # THIS IS JUST BAD IN EVERY WAY and does not work:)
             piece = True
             hax = 1
             block_data = b''
             while piece:
-                time.sleep(0.5)
+                time.sleep(0.2)
                 message_type = PeerMessage(self.client_socket).receive_peer_communication_status() 
                 if message_type == MessageType.piece.name:
                     iprint("Peer did send a piece message")
@@ -98,7 +99,7 @@ class Download:
                 else:
                     eprint("MESSAGE:", message_type)
                     hax += 1
-                    if hax == 20:
+                    if hax == 10:
                         return b'', False 
                 #if (time.time() - time_block_start)  >= 0.5: # 500ms
                 #    print("Peer does not respond with a piece message")
