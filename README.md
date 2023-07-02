@@ -2,6 +2,10 @@
 
 Work in progress, and anything TCP is a mess you will be connected to the whole world, network is not my strong suit :)
 
+
+### NOTE: 
+Can we learn classes so we can store data into classes instead of passing 293 stuff around? or other solution now it is functional classes programming or something? :P
+
 ### Installation
 ```console
 Clone: git clone https://github.com/Bekkelien/tinytorrent

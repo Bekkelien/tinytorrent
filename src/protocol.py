@@ -10,18 +10,18 @@ from dataclasses import dataclass
 from bitstring import BitArray
 from collections import Counter
 
-#from functools import lru_cache
+#from functools import lru_cache # NOTE: Caching
 
 # Internals
 from src.config import Config
 # from src.networking import PeerCommunication TODO:
 from src.helpers import iprint, eprint, wprint, dprint, timer, pprint
+from src.clients import Client
 
 # Configuration settings
 config = Config().get_config()
 
 class MessageType(Enum): # NOT sure i like Enums or am I using them wrong?
-    # Keep alive not implemented
     choke = 0
     unchoke = 1
     interested = 2
@@ -41,22 +41,6 @@ class Handshake:
 
     response_length = 68
     #reserved = b'\x00\x00\x00\x00\x00\x10\x00\x00'
-
-@dataclass
-class Extensions:
-    fast_extensions = b'\x04' # Not implemented
-    exception_protocol = 16 # == b'\x10'== BEP 10
-
-@dataclass # NOTE: Double use and messy with client in client used 2 times
-class Clients:
-    clients = json.load(open('./src/clients.json'))
-    def _peer_client_software(self, peer_id):
-        client_id = peer_id[1:3].decode("utf-8", "ignore") 
-
-        if Clients.clients.get(client_id) == None:
-            wprint("Unknown client software for peer id:", peer_id, "TODO: Implement some verification here?")
-        else:
-            iprint("Peer client:", Clients.clients[client_id])
 
 
 # Use this more places TODO:: client sockets are store in to many classes for same peer
@@ -157,7 +141,7 @@ class PeerMessage():
 
     def receive_block(self, block_size: int) -> bytes:
         block_data = b''
-        remaining_payload = block_size + 13 - 5 #B BUG?? 13?? 5 = Header length # BUG MEGAHACK will not be correct for last piece
+        remaining_payload = block_size + 13 - 5 # Bad solution
         hax = PeerCommunication(self.client_socket)
 
         try:
@@ -230,20 +214,6 @@ class PeerWire():
         self.metadata = metadata
         self.peer_addresses = peer_addresses
 
-    def _extensions(self, reserved):
-        if reserved[5]  == Extensions.exception_protocol:
-            iprint("Peer support extension protocol: BEP 10 - Extension Protocol for Peers to Send Arbitrary Data")
-
-    def _peer_client_software(self, peer_id) -> str:
-        client_id = peer_id[1:3].decode("utf-8", "ignore") 
-
-        if Clients.clients.get(client_id) == None:
-            wprint("Unknown client software for peer id:", peer_id, "TODO: Implement some verification here?")
-            return 'Unknown'
-        else:
-            iprint("Peer client:", Clients.clients[client_id])
-            return Clients.clients[client_id]
-    
     @timer
     def _handshake(self, peer_address: Tuple) -> list: # TODO Separate this code further 
         """ 
@@ -277,7 +247,7 @@ class PeerWire():
         if len(response) >= Handshake.response_length:
             response = unpack('>1s19s8s20s20s', response[0:Handshake.response_length])
             
-            pstrlen, pstr, reserved, info_hash, client_id = response[0:5]
+            pstrlen, pstr, reserved, info_hash, peer_identifier = response[0:5]
 
             if (Handshake.pstrlen + Handshake.pstr) != pstrlen + pstr:
                 wprint("Handshake response failed unknown protocol:", pstr.decode("utf-8", "ignore"))
@@ -286,8 +256,9 @@ class PeerWire():
             # Validate  # NOTE :: Messy
             if self.metadata['info_hash'] == info_hash:
                 iprint("Handshake accepted")
-                self._extensions(reserved) # NOTE: No handling ATM
-                client = self._peer_client_software(client_id) # NOTE: No handling ATM
+                # Dup calls, how to remove these and keep clean syntax
+                Client().extensions(reserved)
+                client_name = Client().software(peer_identifier)
 
                 # Check for bitfield response TODO:: move to send -> receive system
                 peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
@@ -298,7 +269,7 @@ class PeerWire():
                 # Peer status :: BUG :: should only be choke or unchoke can be all status messages ATM
                 iprint("Peer responded with:", peer_status)
 
-                peer = [self.client_socket, peer_status, peer_data_percentage, peer_status, client]
+                peer = [self.client_socket, peer_status, peer_data_percentage, peer_status, client_name]
                 return peer
 
         elif len(response) < Handshake.response_length:
