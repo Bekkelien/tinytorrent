@@ -21,7 +21,7 @@ class Clients:
     clients = json.load(open('./src/clients.json'))
 
 
-class Message(Enum):
+class MessageType(Enum):
     choke = 0
     unchoke = 1
     interested = 2
@@ -66,12 +66,12 @@ class PeerMessage():
 
             else:
                 wprint("Peer state message can't be unpacked, response not correct length")
-                return Message.choke.value # NOTE: If we get here we will fail later due to assuming unchoke
+                return MessageType.choke.value # NOTE: If we get here we will fail later due to assuming unchoke
 
             # Validation NOTE: not really a validation function just checks the response length
             if response[0] == length:
-                #iprint("Peer response:", Message(response[1]).name) # BUG: Fail if response is not a int
-                peer_state = Message(response[1]).value
+                #iprint("Peer response:", MessageType(response[1]).name) # BUG: Fail if response is not a int
+                peer_state = MessageType(response[1]).value
                 return peer_state # TODO:::
 
             else:
@@ -80,7 +80,7 @@ class PeerMessage():
         else:
             eprint("Keep alive message not supported for this client ATM") 
 
-        return Message.choke.value  # TODO:::
+        return MessageType.choke.value  # TODO:::
 
 class Handshake: 
     def __init__(self, metadata):
@@ -232,8 +232,8 @@ class Handshake:
         # UBERHAX
         try:
             reader, writer = self.connections[peer_ip[0]] # HAX
-            message_state = await PeerMessage().state_message(reader, writer, Message.interested) # HAX
-            peer = [client_socket, peer_ip, peer_data, Message(message_state).name]
+            message_state = await PeerMessage().state_message(reader, writer, MessageType.interested) # HAX
+            peer = [client_socket, peer_ip, peer_data, MessageType(message_state).name]
             self.peers_metadata.append(peer)
         except Exception as e:
             eprint("FIX THIS ")

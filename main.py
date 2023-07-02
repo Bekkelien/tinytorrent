@@ -14,6 +14,8 @@ from src.helpers import iprint, dprint, pprint
 # Configuration settings
 config = Config().get_config()
 
+# TODO: Client passing needs to be changed is a mess now
+
 if __name__ == '__main__':
     iprint("Starting TinyTorrent client with peer id:", config['client']['peer_id'])
 

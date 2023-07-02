@@ -8,7 +8,7 @@ from struct import pack, unpack
 from src.config import Config
 from src.read_torrent import TorrentFile
 from src.helpers import iprint, eprint, wprint, dprint
-from src.protocol import Message, PeerMessage
+from src.protocol import MessageType, PeerMessage
 
 # Configuration settings
 config = Config().get_config()
@@ -40,6 +40,7 @@ class Download:
 
 
     def _piece_validation(self, piece_data) -> bytes:
+        dprint("Piece validation data length TEST:", len(piece_data))
         piece_hash = hashlib.sha1(piece_data).digest()
 
         if piece_hash == self.metadata['pieces'][(self.index*20):20 +(self.index*20)]: # Make this easier to index?
@@ -56,106 +57,67 @@ class Download:
             wprint("Piece:", self.index, "hash verification failed")
             return  b''        
 
-    def _piece_last_check(self):
+    def _piece_last_check(self) -> bool:
         if self.index == self.metadata['pieces_count'] - 1:  
             return True
     
         return False
 
-
+    # TODO PRE SEND AND READ SOCKET FOR EACH CONN AND PEER AND MESSAGE TYPE
     def linear_download_piece(self): # Bytes,bool how to do two return stuff thing
         # piece:    <len=0009+X><id=7><index><begin><block>
         # request:  <len=0013><id=6><index><begin><length>
         blocks = self._linear_piece_manager() # Piece to download
-        
+        flag = None
         piece_data = b''
-        piece_time_start = time.time()
+        #piece_time_start = time.time()
         for block in range(blocks):
+            dprint("BLOCK:", block)
+            #time_block_start = time.time()
             if self.remaining_pieces == 1 and blocks == block + 1:
                 print("Trying to download the last block:", blocks, "in piece:", self.index, "with a size of:", self.block_size_last)
-                payload = [self.index, block*BLOCK_SIZE, self.block_size_last]
+                hax_current_block_size = self.block_size_last
             else:
-                payload = [self.index, block*BLOCK_SIZE, BLOCK_SIZE]
-            try:
-                #iprint("Requesting block:", block+1, "from peer")
-                PeerMessage(self.client_socket).send_request(payload) # TODO: MAKE PAYLOAD Stuff more intuitive 
-   
-            except Exception as e: # TODO
-                eprint("Cant download piece:", e)
-                return b'', False
-        
-        for block in range(blocks):
-            response = b''
-            start = time.time()
-            while True:
-                # BUG: recv can read buffer before it has all data which is tits down not up
-                # BUG:: This can crash and are bad implementation as everything else in the DOWNLOAD code
+                hax_current_block_size = BLOCK_SIZE
+            
+            print(self.index, block*BLOCK_SIZE, hax_current_block_size)
+            PeerMessage(self.client_socket).send_request(self.index, block*BLOCK_SIZE, hax_current_block_size) # TODO: MAKE PAYLOAD Stuff more intuitive 
 
-                try:
-                    response = self.client_socket.recv(13 + BLOCK_SIZE) # Make buffer size correct length                     
-                    message = unpack('>IBII', response[0:13]) # Unpacking transaction "Header"
-
-                except: 
-                    break # BAD handling 
-                
-                message_block_size = message[0] - 9 # TODO: Fix hardcoding 
-                message_id = message[1]
-                message_index = message[2]
-                message_begin = message[3] # TODO :: (This is the offset to the next block we are looking for)
-
-                # Validates if a incoming message are a piece message
-                if message_block_size == BLOCK_SIZE and message_id == Message.piece.value and message_index == self.index:
-                    # TEST HAX START: (If not full data look again in buffer)
-                    hax = 0
-                    while True:
-                        # SUPERHAX START
-                        if self.remaining_pieces == 1 and blocks == block + 1: 
-                            response = response + self.client_socket.recv(13 + self.block_size_last - len(response))
-                            time.sleep(0.005)
-                            hax += 1
-                            if hax > 400:
-                                break # Should then move to next not continue to download BUG
-                        # SUPERHAX END
-                        if len(response) < 13 + BLOCK_SIZE:
-                            #dprint("TEST:", len(response), "Expected:", 13 + BLOCK_SIZE)
-                            try:
-                                response = response + self.client_socket.recv(13 + BLOCK_SIZE - len(response))
-                            
-                            except:
-                                break
-                            time.sleep(0.005)
-                            hax += 1
-                            if hax > 400:
-                                break # Should then move to next not continue to download BUG
-                        else:
-                            break
-                        
-                        
-                    # TEST HAX END:
-                    iprint("Peer response:", message, "adding data to piece")
-                    #dprint(len(response[13:]))
-                    piece_data = piece_data + response[13:] 
-                    break
+        #for block in range(blocks):
+            piece = True
+            hax = 1
+            block_data = b''
+            while piece:
+                time.sleep(0.5)
+                message_type = PeerMessage(self.client_socket).receive_peer_communication_status() 
+                if message_type == MessageType.piece.name:
+                    iprint("Peer did send a piece message")
+                    block_data = block_data + PeerMessage(self.client_socket).receive_block(hax_current_block_size)
+                    piece = False
                 
                 else:
-                    dprint("Not a piece message")
-
-                # After time t break out and move to next peer NOTE: do we ever get here even?
-                if (time.time() - start)  >= 1: # 500ms
-                    print("Peer did not send a valid piece message within the alloted time")
-                    return b'', False
-
+                    eprint("MESSAGE:", message_type)
+                    hax += 1
+                    if hax == 20:
+                        return b'', False 
+                #if (time.time() - time_block_start)  >= 0.5: # 500ms
+                #    print("Peer does not respond with a piece message")
+                #    return b'', False
+            piece_data = piece_data + block_data
 
         # We are faster but still slow as
         # TESTING TO COMPUTE THE DOWNLOAD SPEEEEEEEEEEEEEEEEEEEED :)
-        piece_time_end = time.time()
-        if piece_time_end - piece_time_start != 0: # BUG
-            iprint("Download rate for piece:", self.index, "->" , ((blocks * BLOCK_SIZE) / (piece_time_end - piece_time_start))/(1024*1024), "MB/s")
+        #piece_time_end = time.time()
+        #if piece_time_end - piece_time_start != 0: # BUG
+        #    iprint("Download rate for piece:", self.index, "->" , ((blocks * BLOCK_SIZE) / (piece_time_end - piece_time_start))/(1024*1024), "MB/s")
 
         piece_data = self._piece_validation(piece_data)
+
+        # BUG DOES NOT WORK OR DOES IT?!!!
+        #if piece_data: # Making sure we have valid piece data before flagging last piece # TODO: Messy 
         flag = self._piece_last_check()
 
-        return piece_data, flag
+        return piece_data, flag 
 
 
 if __name__ == '__main__':

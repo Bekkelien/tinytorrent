@@ -1,13 +1,17 @@
 import requests
 import socket
+
 from struct import unpack
+from typing import Optional, Tuple, Union
 
 # Internals 
+from src.protocol import MessageType
 from src.config import Config
 from src.helpers import iprint, eprint, wprint
 
 # Configuration settings
 config = Config().get_config()
+
 
 # Make only for http requests? may be to generic else
 def http_tracker_requests(url, params, message='None') -> list:
@@ -45,7 +49,7 @@ def udp_tracker_response(clientSocket, buffer) -> list:
     """ Response handler for UDP tracker responses """
     try:
         # Attempt to receive data from the socket
-        response = clientSocket.recvfrom(buffer)
+        response = clientSocket.recvfrom(buffer) # NOTE: Why are we using recvfrom here?
         return response
 
     except socket.timeout: wprint("UDP tracker timeout -> No response received")
@@ -85,6 +89,8 @@ def parse_tracker_peers_ip(payload_addresses, split=6):
     # NOTE: Typically tracker respond with this clients address as well to peers-1 is ok or even expected when announce or scrape after first time 
     iprint("Tracker responded with:", len(peer_ip), "peers with valid ip/port combination of total:", peers ,"peers")
     return peer_ip
+
+
 
 
 """

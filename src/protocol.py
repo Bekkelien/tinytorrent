@@ -4,21 +4,23 @@ import math
 import time
 
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, Optional 
 from struct import pack, unpack
 from dataclasses import dataclass
 from bitstring import BitArray
 from collections import Counter
+
 #from functools import lru_cache
 
 # Internals
 from src.config import Config
+# from src.networking import PeerCommunication TODO:
 from src.helpers import iprint, eprint, wprint, dprint, timer, pprint
 
 # Configuration settings
 config = Config().get_config()
 
-class Message(Enum): # NOT sure i like Enums or am I using them wrong?
+class MessageType(Enum): # NOT sure i like Enums or am I using them wrong?
     # Keep alive not implemented
     choke = 0
     unchoke = 1
@@ -55,57 +57,123 @@ class Clients:
             wprint("Unknown client software for peer id:", peer_id, "TODO: Implement some verification here?")
         else:
             iprint("Peer client:", Clients.clients[client_id])
- 
+
+
+# Use this more places TODO:: client sockets are store in to many classes for same peer
+class PeerCommunication():
+    def __init__(self, client_socket: socket.socket):
+        self.client_socket = client_socket
+        self.ip = client_socket.getpeername()[0]
+        self.port = client_socket.getpeername()[1]
+
+    def receive_header(self, buffer_size = 5) -> str:
+        message_type = "Unknown"
+        # "Send keep alive is not implemented"
+        try:
+            data = self.client_socket.recv(buffer_size)
+            message_type = int.from_bytes(data[4:5], byteorder='big')
+        except:
+            wprint("Failed to receive or/no message from peer:", self.ip)
+       
+        if message_type in [i.value for i in MessageType]: #TODO 
+            return MessageType(message_type).name
+        
+        return message_type
+    
+    def receive_data(self, buffer_size) -> bytes:
+        data = b''
+        try:
+            data = self.client_socket.recv(buffer_size)
+
+        except:
+            wprint("Could not receive data from peer:", self.ip)
+        return data
+
+    def send(self, data) -> None:
+        if len(data) >= 5:
+            message_type = int.from_bytes(data[4:5], byteorder='big') # UNPACK INSTEAD
+        else:
+            wprint("Send keep alive is not implemented")
+        if message_type in [i.value for i in MessageType]: #TODO 
+            try:
+                self.client_socket.send(data)
+            except Exception as e:
+                eprint("Failed to send:", MessageType(message_type).name, "to peer:", self.ip ,"Error:", e)
+
+        else:
+            eprint(self.__class__.__name__, "| cant send message to peer:", self.ip, "Unknown message")
+
+
 class PeerMessage():
     def __init__(self, clientSocket):
-        self.clientSocket = clientSocket
+        self.client_socket = clientSocket
     
-    def _send_message(self, message_id: int, payload: bytes = b'') -> None:
-
-        # TODO # keep alive:       <len=0000> 
-        # TODO # choke:            <len=0001>   <id=0>
-        # TODO # unchoke:          <len=0001>   <id=1>
+        # keep alive:       <len=0000> 
+        # --------- Peer Communication Status
+        # choke:            <len=0001>   <id=0>
+        # unchoke:          <len=0001>   <id=1>
         # interested:       <len=0001>   <id=2>
-        # TODO # not interested:   <len=0001>   <id=3>
+        # not interested:   <len=0001>   <id=3>
+        # ---------
         # TODO # have:      <len=0005>   <id=4> <piece index>
         # TODO # bitfield:  <len=0001+X> <id=5> <bitfield>
-        # request:          <len=0013>   <id=6> <index>         <begin>   <length>
-        # TODO# piece:      <len=0009+X> <id=7> <index>         <begin>   <block>
-        # TODO# cancel:     <len=0013>   <id=8> <index>         <begin>   <length>
+        # request:          <len=0013>   <id=6> <piece index>         <begin>   <length>
+        # TODO# piece:      <len=0009+X> <id=7> <piece index>         <begin>   <block>
+        # TODO# cancel:     <len=0013>   <id=8> <piece index>         <begin>   <length>
         # TODO# port:       <len=0003>   <id=9> <listen-port>
 
-        if message_id in [Message.choke.value, 
-                          Message.unchoke.value,
-                          Message.interested.value,
-                          Message.notinterested.value]:
-            
-            message = pack('>Ib', 1, message_id)
 
-        if message_id == Message.request.value:
-            message = pack('>IBIII', 13, message_id, payload[0], payload[1], payload[2]) # TODO
+    def send_keepalive(self):
+        data = pack('>i', 0)
+        PeerCommunication(self.client_socket).send(data)
+        
+    def send_choke(self) -> None: 
+        data = pack('>ib', 1, MessageType.choke.value)
+        PeerCommunication(self.client_socket).send(data)
+
+    def send_unchoke(self) -> None: 
+        data = pack('>ib', 1, MessageType.unchoke.value)
+        PeerCommunication(self.client_socket).send(data)
+
+    def send_interested(self) -> None: 
+        data = pack('>ib', 1, MessageType.interested.value)
+        PeerCommunication(self.client_socket).send(data)
+
+    def send_notinterested(self) -> None: 
+        data = pack('>ib', 1, MessageType.notinterested.value)
+        PeerCommunication(self.client_socket).send(data)
+
+    def send_request(self, piece_index: int, begin: int, length: int) -> None:
+        data = pack('>ibiii', 13, MessageType.request.value, piece_index, begin, length)
+        PeerCommunication(self.client_socket).send(data)
+
+    # TODO Make a receive of incoming messages and handle clients/peers better rename
+    # TODO :: HMM
+    # BUG :: Does not work as we need to know when an incoming message are on the way
+    # For now it just do yolo, so reading memory random data from memory if no message? 
+    def receive_peer_communication_status(self) -> str:
+        message_type = PeerCommunication(self.client_socket).receive_header()
+        return message_type
+
+    def receive_block(self, block_size: int) -> bytes:
+        block_data = b''
+        remaining_payload = block_size + 13 - 5 #B BUG?? 13?? 5 = Header length # BUG MEGAHACK will not be correct for last piece
+        hax = PeerCommunication(self.client_socket)
 
         try:
-            self.clientSocket.send(message)
+            while remaining_payload > 0: # BUG: Can this become infinite?
+                time.sleep(0.001) # TODO .: Remove
+                dprint("Remaining block payload:", remaining_payload)
+                block_data = block_data + hax.receive_data(remaining_payload)
+                remaining_payload -= len(block_data)
+        
         except Exception as e:
-            eprint("Failed to send:", Message(message_id).name, "Error:", e)
-
-    def interested(self) -> str: # NOTE MESSY
-        self._send_message(Message.interested.value)
-        try:
-            response = self.clientSocket.recv(5)
-            if len(response) == 5:
-                _, message_id = unpack('>Ib', response)
-                return Message(message_id).name
-        except:
-            wprint("Peer did not respond to interested message")
-        return 'choke'
-
-    def send_request(self, payload) -> None:
-        self._send_message(Message.request.value, payload) # TODO
-
+            eprint("Reading message payload failed:", e)
+        print(unpack('>ii', block_data[:8]))
+        return block_data[8:] # Hardcoded
 
 # NOTE: Metadata should be stored to a file to avoid passing to every func 
-
+# TODO use peer messages here we are a bit messy now to much here and there
 class Bitfield: 
     def __init__(self, client_socket: socket.socket, metadata: dict) -> None:
         self.metadata: dict = metadata
@@ -114,11 +182,13 @@ class Bitfield:
         self.bitfield_payload: str = ''
         self.peer_data_percentage: int = -1 # -1 = N/A, 0 - 100 = 0-100%
 
+    # TODO:: should be in receive now
     def _receive(self, header: int = 5) -> None:
         """ bitfield: <len=0001+X><id=5><bitfield> """
 
         bitfield_length_bytes = int(self.metadata['bitfield_length'] / 8) 
         try:
+            # TODO peercommunication here
             response = self.client_socket.recv(header + bitfield_length_bytes) 
             bitfield_id  = unpack('>b', response[4:5])[0]
 
@@ -126,7 +196,7 @@ class Bitfield:
             dprint("Peer did not send a bitfield message:", e)
             return
 
-        if bitfield_id  == Message.bitfield.value: # Check what we have correct bitfield id=5
+        if bitfield_id  == MessageType.bitfield.value: # Check what we have correct bitfield id=5
             if len(self.metadata['bitfield']) == len(str(BitArray(response[5:]).bin)): # Using data instead of first 4 bytes of response here 
                 iprint("Valid bitfield received from peer")
                 self.bitfield_payload = str(BitArray(response[5:]).bin)
@@ -219,14 +289,16 @@ class PeerWire():
                 self._extensions(reserved) # NOTE: No handling ATM
                 client = self._peer_client_software(client_id) # NOTE: No handling ATM
 
-                # Check for bitfield response
+                # Check for bitfield response TODO:: move to send -> receive system
                 peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
 
-                # Send interested message to try to unchoke the peer
-                choke_status = PeerMessage(self.client_socket).interested() 
-                iprint("Peer responded with:", choke_status)
+                # Send interested message to try to unchoke the peer TODO: messy to use and create a million objects
+                PeerMessage(self.client_socket).send_interested() 
+                peer_status = PeerMessage(self.client_socket).receive_peer_communication_status() #  BUG: This could be "any" receive message 
+                # Peer status :: BUG :: should only be choke or unchoke can be all status messages ATM
+                iprint("Peer responded with:", peer_status)
 
-                peer = [self.client_socket, peer_status, peer_data_percentage, choke_status, client]
+                peer = [self.client_socket, peer_status, peer_data_percentage, peer_status, client]
                 return peer
 
         elif len(response) < Handshake.response_length:

@@ -14,7 +14,7 @@ from src.helpers import iprint, eprint, wprint, dprint, timer
 # Configuration settings
 config = Config().get_config()
 
-class Message(Enum):
+class MessageType(Enum):
     # keepalive = -1 #BUG
     choke = 0
     unchoke = 1
@@ -69,8 +69,8 @@ class PeerMessage():
 
             # Validation NOTE: not really a validation function just checks the response length
             if response[0] == length:
-                #iprint("Peer response:", Message(response[1]).name) # BUG: Fail if response is not a int
-                peer_state = Message(response[1]).value
+                #iprint("Peer response:", MessageType(response[1]).name) # BUG: Fail if response is not a int
+                peer_state = MessageType(response[1]).value
                 return peer_state # TODO:::
 
             else:
@@ -162,11 +162,11 @@ class PeerWire():
                         #  Testing
                         iprint("Response length:",len(response))
                         if len(response) >= 5:
-                            message_id = unpack('>b', response[4:5])[0]
-                            dprint(message_id)
-                            dprint("RESPONSE TEST:", Message(message_id).name)
+                            message_type = unpack('>b', response[4:5])[0]
+                            dprint(message_type)
+                            dprint("RESPONSE TEST:", MessageType(message_type).name)
                             # HAX Testing
-                            if Message(message_id).name == Message.bitfield.name:
+                            if MessageType(message_type).name == MessageType.bitfield.name:
                                 dprint("PAYLOAD Length:", len(BitArray(response[5:]).bin))
 
                                 if len(BitArray(response[5:]).bin) == self.metadata['bitfield_length']:
@@ -196,9 +196,9 @@ class PeerWire():
                     try:
                         # TODO: Reimplement this!
                         one_peer_connected_test = PeerMessage(clientSocket)
-                        peer_state = one_peer_connected_test.state_message(Message.interested)
+                        peer_state = one_peer_connected_test.state_message(MessageType.interested)
                         if peer_state:
-                            self.peers_connected.append([client_address[0],client_address[1],peer_status,Message(peer_state).name])
+                            self.peers_connected.append([client_address[0],client_address[1],peer_status,MessageType(peer_state).name])
                             dprint(self.peers_connected)
                         # peer_status
                         #one_peer_connected_test.have_message(0)
