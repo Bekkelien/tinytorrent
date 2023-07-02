@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
                 # TEST
                 #print(psutil.net_connections())
-                DOWNLOAD = False
+                DOWNLOAD = True
                 if DOWNLOAD:
                     if peer_addresses_connected:
                         for peer in peer_addresses_connected:

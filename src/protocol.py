@@ -50,7 +50,7 @@ class PeerCommunication():
         self.ip = client_socket.getpeername()[0]
         self.port = client_socket.getpeername()[1]
 
-    def receive_header(self, buffer_size = 5) -> str:
+    def receive_header(self, buffer_size=5) -> str:
         message_type = "Unknown"
         # "Send keep alive is not implemented"
         try:
@@ -256,12 +256,13 @@ class PeerWire():
             # Validate  # NOTE :: Messy
             if self.metadata['info_hash'] == info_hash:
                 iprint("Handshake accepted")
-                # Dup calls, how to remove these and keep clean syntax
+                # TODO: Dup calls, how to remove these and keep clean syntax
                 Client().extensions(reserved)
                 client_name = Client().software(peer_identifier)
 
                 # Check for bitfield response TODO:: move to send -> receive system
-                peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
+                # BUG redo
+                _, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
 
                 # Send interested message to try to unchoke the peer TODO: messy to use and create a million objects
                 PeerMessage(self.client_socket).send_interested() 
@@ -269,7 +270,7 @@ class PeerWire():
                 # Peer status :: BUG :: should only be choke or unchoke can be all status messages ATM
                 iprint("Peer responded with:", peer_status)
 
-                peer = [self.client_socket, peer_status, peer_data_percentage, peer_status, client_name]
+                peer = [self.client_socket, peer_status, peer_data_percentage, "NotImplemented", client_name]
                 return peer
 
         elif len(response) < Handshake.response_length:

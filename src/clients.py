@@ -17,7 +17,7 @@ class Client:
 
     def software(self, peer_identifier: bytes) -> str:
         peer_identifier = peer_identifier.decode("utf-8", "ignore")
-        if len(peer_identifier) > 8:
+        if len(peer_identifier) >= 8:
             if peer_identifier[1:3] in self.clients.keys():
                 name = self.clients[peer_identifier[1:3]]
                 version = peer_identifier[3:7]
@@ -27,6 +27,7 @@ class Client:
         
         # TODO: implement flag to disconnect this peer if invalid message
         wprint("Unknown client software:", peer_identifier)
+        return ''
 
     def extensions(self, reserved): # TODO
         if reserved[5]  == Extensions.exception_protocol:
