@@ -89,8 +89,10 @@ class PeerCommunication():
 
 
 class PeerMessage():
-    def __init__(self, clientSocket):
+    def __init__(self, clientSocket, metadata):
+        self.metadata = metadata
         self.client_socket = clientSocket
+        self.last_message = None # NAH hax
     
         # keep alive:       <len=0000> 
         # --------- Peer Communication Status
@@ -135,9 +137,21 @@ class PeerMessage():
     # TODO :: HMM
     # BUG :: Does not work as we need to know when an incoming message are on the way
     # For now it just do yolo, so reading memory random data from memory if no message? 
-    def receive_peer_communication_status(self) -> str:
-        message_type = PeerCommunication(self.client_socket).receive_header()
-        return message_type
+    # Make this an generic receive:
+    def receive(self) -> Optional[bytes]: # This is kinda dups HAX: TODO: Metadata improvements needed
+        peer = PeerCommunication(self.client_socket)
+        time.sleep(1)
+        self.last_message = peer.receive_header() 
+        eprint(self.last_message)
+        if not self.last_message:
+            return None 
+
+        if self.last_message == MessageType.bitfield.name:
+            iprint("Received bitfield message from peer:", peer.ip)
+            data = peer.receive_data(int(self.metadata['bitfield_length'] / 8))
+            dprint("Bitfield message from peer:", peer.ip, "bitfield:", data)
+            return data
+
 
     def receive_block(self, block_size: int) -> bytes:
         block_data = b''
@@ -158,6 +172,7 @@ class PeerMessage():
 
 # NOTE: Metadata should be stored to a file to avoid passing to every func 
 # TODO use peer messages here we are a bit messy now to much here and there
+# Class for socket so we can inherent socket for all function that need a socket 
 class Bitfield: 
     def __init__(self, client_socket: socket.socket, metadata: dict) -> None:
         self.metadata: dict = metadata
@@ -166,31 +181,17 @@ class Bitfield:
         self.bitfield_payload: str = ''
         self.peer_data_percentage: int = -1 # -1 = N/A, 0 - 100 = 0-100%
 
-    # TODO:: should be in receive now
-    def _receive(self, header: int = 5) -> None:
-        """ bitfield: <len=0001+X><id=5><bitfield> """
+    # TODO:: should be in receive now and in future we should handle all incoming msg.
+    def _receive(self) -> None:
 
-        bitfield_length_bytes = int(self.metadata['bitfield_length'] / 8) 
-        try:
-            # TODO peercommunication here
-            response = self.client_socket.recv(header + bitfield_length_bytes) 
-            bitfield_id  = unpack('>b', response[4:5])[0]
-
-        except Exception as e: # TODO::
-            dprint("Peer did not send a bitfield message:", e)
+        data = PeerMessage(self.client_socket, self.metadata).receive() # Should be unnecessary to pass client_socket everywhere 
+ 
+        if len(self.metadata['bitfield']) == len(str(BitArray(data).bin)): # Using data instead of first 4 bytes of response here 
+            iprint("Valid bitfield received from peer")
+            self.bitfield_payload = str(BitArray(data).bin)
             return
 
-        if bitfield_id  == MessageType.bitfield.value: # Check what we have correct bitfield id=5
-            if len(self.metadata['bitfield']) == len(str(BitArray(response[5:]).bin)): # Using data instead of first 4 bytes of response here 
-                iprint("Valid bitfield received from peer")
-                self.bitfield_payload = str(BitArray(response[5:]).bin)
-                return
-
-        dprint("Invalid bitfield response from peer")
-
     def _determine_peer_status(self) -> None:
-        #dprint("Bitfield payload from peer:", self.bitfield_payload)
-        
         if self.bitfield_payload:
             if self.metadata['bitfield'] == self.bitfield_payload:
                 self.peer_status = 'seeder' # Peer has 100% of data 
@@ -260,14 +261,10 @@ class PeerWire():
                 Client().extensions(reserved)
                 client_name = Client().software(peer_identifier)
 
-                # Check for bitfield response TODO:: move to send -> receive system
-                # BUG redo
-                _, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume()
+                peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume() # Calling Bitfield consume can be other messages as we just parse the first one
 
                 # Send interested message to try to unchoke the peer TODO: messy to use and create a million objects
-                PeerMessage(self.client_socket).send_interested() 
-                peer_status = PeerMessage(self.client_socket).receive_peer_communication_status() #  BUG: This could be "any" receive message 
-                # Peer status :: BUG :: should only be choke or unchoke can be all status messages ATM
+                PeerMessage(self.client_socket, self.metadata).send_interested() 
                 iprint("Peer responded with:", peer_status)
 
                 peer = [self.client_socket, peer_status, peer_data_percentage, "NotImplemented", client_name]

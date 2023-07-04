@@ -72,7 +72,7 @@ class Download:
         piece_data = b''
         #piece_time_start = time.time()
         for block in range(blocks):
-            dprint("BLOCK:", block)
+            #dprint("BLOCK:", block)
             #time_block_start = time.time()
             if self.remaining_pieces == 1 and blocks == block + 1:
                 print("Trying to download the last block:", blocks, "in piece:", self.index, "with a size of:", self.block_size_last)
@@ -80,17 +80,19 @@ class Download:
             else:
                 hax_current_block_size = BLOCK_SIZE
             
-            print(self.index, block*BLOCK_SIZE, hax_current_block_size)
+            #print(self.index, block*BLOCK_SIZE, hax_current_block_size)
             PeerMessage(self.client_socket).send_request(self.index, block*BLOCK_SIZE, hax_current_block_size) # TODO: MAKE PAYLOAD Stuff more intuitive 
 
+        time.sleep(0.3)
         for block in range(blocks):
         # THIS IS JUST BAD IN EVERY WAY and does not work:)
             piece = True
             hax = 1
             block_data = b''
+            
             while piece:
-                time.sleep(0.2)
-                message_type = PeerMessage(self.client_socket).receive_peer_communication_status() 
+                time.sleep(0.05)
+                message_type = PeerMessage(self.client_socket).receive() 
                 if message_type == MessageType.piece.name:
                     iprint("Peer did send a piece message")
                     block_data = block_data + PeerMessage(self.client_socket).receive_block(hax_current_block_size)

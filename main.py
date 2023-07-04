@@ -21,8 +21,8 @@ if __name__ == '__main__':
 
     PATH = Path('./src/files/')
     #files = ['pi-lite.torrent', 'gimp.torrent','tails.torrent', 'ubuntu.torrent','single.torrent','slackware.torrent', 'kalilinux.torrent','altlinux.torrent', 'wired-cd.torrent']
-    files = ['gimp.torrent']
-    #files = ['pi-lite.torrent']
+    #files = ['gimp.torrent']
+    files = ['pi-lite.torrent']
     #files = ['ChiaSetup-1.8.1.exe.torrent']
     
     for file in files:
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
                 # TEST
                 #print(psutil.net_connections())
-                DOWNLOAD = True
+                DOWNLOAD = False
                 if DOWNLOAD:
                     if peer_addresses_connected:
                         for peer in peer_addresses_connected:
