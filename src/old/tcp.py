@@ -84,8 +84,8 @@ class PeerMessage():
     # Merge else statements 
 
 class PeerWire():
-    def __init__(self, metadata):
-        self.metadata = metadata
+    def __init__(self):
+        MetadataStorage().metadata
         self.peers_connected = [] # NOTE: This is not really a good solution to store in a list, hard to remove invalid peers or update status
         self.piece_hax = [] # TODO: HAX TEMP
         self.torrent_data = b''

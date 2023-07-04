@@ -10,7 +10,7 @@ from src.helpers import iprint, tprint
 
 BLOCK_SIZE = 20
 
-class TorrentFile():
+class TorrentFile:
     def __init__(self, file):
         self.file_path = Path(file)
 
@@ -51,11 +51,24 @@ class TorrentFile():
         tprint(metadata) 
  
         return metadata
+
+# add to one class? TODO
+class MetadataStorage:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        return cls._instance
         
 if __name__ == '__main__':
         PATH = Path('./src/files/')
         file_1 = 'gimp.torrent'
 
         # Parse a torrent files
-        metadata = TorrentFile(PATH / file_1).read()
-        print(metadata)
+        metadata_dict = TorrentFile(PATH / file_1).read()
+        MetadataStorage = metadata_dict # Can we do this more clean? 
+        print(MetadataStorage)
+
+
+

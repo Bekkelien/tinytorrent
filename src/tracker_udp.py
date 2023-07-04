@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # Internal 
 from src.config import Config
-from src.read_torrent import TorrentFile
+from src.read_torrent import MetadataStorage
 from src.networking import parse_tracker_peers_ip, udp_tracker_response
 from src.helpers import iprint, eprint, wprint, dprint, timer
 
@@ -27,10 +27,9 @@ class EventUdp(Enum):
     stopped = 3
 
 class UdpTracker:
-    def __init__(self, metadata, announce): 
-
+    def __init__(self, announce): 
         self.hostname = announce
-        self.metadata = metadata
+        self.metadata = MetadataStorage().metadata
         self.peer_ip = []
 
         try:

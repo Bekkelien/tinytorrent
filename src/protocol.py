@@ -15,6 +15,7 @@ from collections import Counter
 # Internals
 from src.config import Config
 # from src.networking import PeerCommunication TODO:
+from src.read_torrent import MetadataStorage
 from src.helpers import iprint, eprint, wprint, dprint, timer, pprint
 from src.clients import Client
 
@@ -89,8 +90,8 @@ class PeerCommunication():
 
 
 class PeerMessage():
-    def __init__(self, clientSocket, metadata):
-        self.metadata = metadata
+    def __init__(self, clientSocket):
+        self.metadata = MetadataStorage().metadata
         self.client_socket = clientSocket
         self.last_message = None # NAH hax
     
@@ -140,7 +141,6 @@ class PeerMessage():
     # Make this an generic receive:
     def receive(self) -> Optional[bytes]: # This is kinda dups HAX: TODO: Metadata improvements needed
         peer = PeerCommunication(self.client_socket)
-        time.sleep(1)
         self.last_message = peer.receive_header() 
         eprint(self.last_message)
         if not self.last_message:
@@ -174,8 +174,8 @@ class PeerMessage():
 # TODO use peer messages here we are a bit messy now to much here and there
 # Class for socket so we can inherent socket for all function that need a socket 
 class Bitfield: 
-    def __init__(self, client_socket: socket.socket, metadata: dict) -> None:
-        self.metadata: dict = metadata
+    def __init__(self, client_socket: socket.socket) -> None:
+        self.metadata: dict = MetadataStorage().metadata
         self.peer_status: str = 'leecher'
         self.client_socket: socket.socket = client_socket
         self.bitfield_payload: str = ''
@@ -184,7 +184,7 @@ class Bitfield:
     # TODO:: should be in receive now and in future we should handle all incoming msg.
     def _receive(self) -> None:
 
-        data = PeerMessage(self.client_socket, self.metadata).receive() # Should be unnecessary to pass client_socket everywhere 
+        data = PeerMessage(self.client_socket).receive() # Should be unnecessary to pass client_socket everywhere 
  
         if len(self.metadata['bitfield']) == len(str(BitArray(data).bin)): # Using data instead of first 4 bytes of response here 
             iprint("Valid bitfield received from peer")
@@ -211,8 +211,8 @@ class Bitfield:
 
 
 class PeerWire():
-    def __init__(self, metadata, peer_addresses):
-        self.metadata = metadata
+    def __init__(self, peer_addresses):
+        self.metadata = MetadataStorage().metadata
         self.peer_addresses = peer_addresses
 
     @timer
@@ -261,10 +261,10 @@ class PeerWire():
                 Client().extensions(reserved)
                 client_name = Client().software(peer_identifier)
 
-                peer_status, peer_data_percentage = Bitfield(self.client_socket, self.metadata).consume() # Calling Bitfield consume can be other messages as we just parse the first one
+                peer_status, peer_data_percentage = Bitfield(self.client_socket).consume() # Calling Bitfield consume can be other messages as we just parse the first one
 
                 # Send interested message to try to unchoke the peer TODO: messy to use and create a million objects
-                PeerMessage(self.client_socket, self.metadata).send_interested() 
+                PeerMessage(self.client_socket).send_interested() 
                 iprint("Peer responded with:", peer_status)
 
                 peer = [self.client_socket, peer_status, peer_data_percentage, "NotImplemented", client_name]

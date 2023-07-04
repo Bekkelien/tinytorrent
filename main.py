@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Internal s
 from src.config import Config
-from src.read_torrent import TorrentFile
+from src.read_torrent import TorrentFile, MetadataStorage
 from src.manager import TrackerManager
 from src.protocol import PeerWire
 from src.download import Download
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     
     for file in files:
         metadata = TorrentFile(PATH / file).read()
-
+        MetadataStorage().metadata = metadata # Can we do this cleaner?
         data = b''
 
         ASYNC = False # Does not connect properly to peers it seems and more bugs and stuff
@@ -35,17 +35,17 @@ if __name__ == '__main__':
             import asyncio
             from async_peerwire_testing import Handshake
         while True:
-            tracker = TrackerManager(metadata)
+            tracker = TrackerManager()
             peer_addresses = tracker.get_clients()
 
-            if ASYNC: peers = asyncio.run(Handshake(metadata).run(peer_addresses))
+            if ASYNC: peers = asyncio.run(Handshake().run(peer_addresses))
             else:
                 #TODO: We are doing handshake every time ATM 
-                peer_addresses_connected = PeerWire(metadata, peer_addresses).connect()
+                peer_addresses_connected = PeerWire(peer_addresses).connect()
 
                 # TEST
                 #print(psutil.net_connections())
-                DOWNLOAD = False
+                DOWNLOAD = True
                 if DOWNLOAD:
                     if peer_addresses_connected:
                         for peer in peer_addresses_connected:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
                             state = True
                             # Jumps peer for each piece 
                             while state: # Hax to avoid for each piece
-                                piece_data, flag = Download(metadata, client_socket).linear_download_piece() 
+                                piece_data, flag = Download(client_socket).linear_download_piece() 
                                 if piece_data:  
                                     data = data + piece_data
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                                     state = False
 
                                 if flag:
-                                    StoreDownload(metadata).save(data)
+                                    StoreDownload().save(data)
                                     iprint("Download success, what a time to be alive ")
                                     raise NotImplementedError
 

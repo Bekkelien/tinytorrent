@@ -3,6 +3,7 @@ from src.config import Config
 from src.tracker_udp import UdpTracker, EventUdp
 from src.tracker_http import TrackerConnectionHttp, EventHttp
 from src.helpers import iprint, eprint, wprint, dprint, timer
+from src.read_torrent import MetadataStorage
 
 from src.config import Config
 
@@ -10,13 +11,13 @@ from src.config import Config
 config = Config().get_config()
 
 class TrackerManager():
-    def __init__(self, metadata):
-        self.metadata = metadata
+    def __init__(self):
+        self.metadata = MetadataStorage().metadata
         self.peer_ip = []
         self.peers = 0
 
     def _tracker_http(self, announce, scrape=False):
-            tracker = TrackerConnectionHttp(self.metadata, announce)
+            tracker = TrackerConnectionHttp(announce)
             peer_ip = tracker.announce(EventHttp.started) # NOTE:: EVENT not yet "supported"
             if scrape: tracker.scrape()
             return peer_ip

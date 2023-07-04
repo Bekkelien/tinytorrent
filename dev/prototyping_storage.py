@@ -5,7 +5,7 @@ from src.helpers import iprint, dprint
 
 from pathlib import Path
 
-from src.read_torrent import TorrentFile
+from src.read_torrent import TorrentFile, MetadataStorage
 
 PATH = Path('./src/files/')
 
@@ -13,9 +13,9 @@ files = ['wired-cd.torrent']
 
 class StoreDownload:
     """ Stores a full torrent that are living in memory """
-    def __init__(self, metadata) -> None:
+    def __init__(self) -> None:
         self.path = "./download/" # TODO make a config 
-        self.metadata = metadata
+        self.metdata = MetadataStorage().metadata
 
     def _to_disk(self, file, data):
         with open(self.path + file, 'wb') as file:

@@ -6,7 +6,7 @@ from struct import pack, unpack
 
 # Internals
 from src.config import Config
-from src.read_torrent import TorrentFile
+from src.read_torrent import TorrentFile, MetadataStorage
 from src.helpers import iprint, eprint, wprint, dprint
 from src.protocol import MessageType, PeerMessage
 
@@ -18,12 +18,12 @@ BLOCK_SIZE = 2**14
 
 # NOTE: Current index and rest pieces are a bit messy 
 class Download:
-    def __init__(self, metadata, client_socket) -> None:
-        self.metadata = metadata
+    def __init__(self, client_socket) -> None:
+        self.metadata = MetadataStorage().metadata
         self.client_socket = client_socket
         self.index = self.metadata['pieces_downloaded'].count('1')
         self.remaining_pieces = self.metadata['pieces_downloaded'].count('0')
-        self.block_size_last =  (metadata['size']%metadata['piece_length']) % BLOCK_SIZE 
+        self.block_size_last =  (self.metadata['size'] % self.metadata['piece_length']) % BLOCK_SIZE 
 
     def _linear_piece_manager(self) -> int:
         self.index  = self.metadata['pieces_downloaded'].count('1')
@@ -85,17 +85,20 @@ class Download:
 
         time.sleep(0.3)
         for block in range(blocks):
-        # THIS IS JUST BAD IN EVERY WAY and does not work:)
+        # BUG THIS IS JUST BAD IN EVERY WAY and does not work:)
             piece = True
             hax = 1
             block_data = b''
             
             while piece:
                 time.sleep(0.05)
-                message_type = PeerMessage(self.client_socket).receive() 
+                # This is messy 
+                peer = PeerMessage(self.client_socket)
+                peer.receive()
+                message_type = peer.last_message  
                 if message_type == MessageType.piece.name:
                     iprint("Peer did send a piece message")
-                    block_data = block_data + PeerMessage(self.client_socket).receive_block(hax_current_block_size)
+                    block_data = block_data + peer.receive_block(hax_current_block_size)
                     piece = False
                 
                 else:

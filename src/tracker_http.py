@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 # Internals 
 from src.config import Config
+from src.read_torrent import MetadataStorage
 from src.helpers import iprint, eprint, wprint, dprint
 from src.networking import parse_tracker_peers_ip, http_tracker_requests, http_tracker_response_verify
 
@@ -17,8 +18,8 @@ class EventHttp():
     completed = 'completed'
 
 class TrackerConnectionHttp:
-    def __init__(self, metadata, announce):
-        self.metadata = metadata
+    def __init__(self, announce):
+        self.metadata = MetadataStorage().metadata
 
         self.complete = None
         self.incomplete = None

@@ -12,7 +12,7 @@ from bitstring import BitArray
 # Internals
 from src.config import Config
 from src.helpers import iprint, eprint, wprint, dprint, timer
-
+from src.read_torrent import MetadataStorage
 # Configuration settings
 config = Config().get_config()
 
@@ -83,10 +83,10 @@ class PeerMessage():
         return MessageType.choke.value  # TODO:::
 
 class Handshake: 
-    def __init__(self, metadata):
+    def __init__(self):
         """ Handshake: <pstrlen><pstr><reserved><info_hash><peer_id> """
 
-        self.metadata = metadata
+        self.metadata = MetadataStorage().metadata
 
         self.pstrlen = b'\x13'                
         self.pstr =  b'BitTorrent protocol' 
